@@ -1,0 +1,38 @@
+# ============================================================
+# Root .gitignore for the entire HUMANAID monorepo
+# ============================================================
+
+# ── Visual Studio / .NET ──────────────────────────────────
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.ntvs*
+*.njsproj
+bin/
+obj/
+.env
+appsettings.Development.json
+appsettings.Local.json
+*.db
+*.db-shm
+*.db-wal
+*.pfx
+secrets/
+
+# ── Node / Frontend ───────────────────────────────────────
+node_modules/
+dist/
+dist-ssr/
+*.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ── OS ───────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.swp

@@ -1,0 +1,19 @@
+# Optional: a local PostgreSQL for the "Postgres" provider.
+#   docker compose up -d
+# then set (user-secrets or env vars):
+#   Database__Provider=Postgres
+#   ConnectionStrings__Default="Host=localhost;Port=5432;Database=humanaid;Username=humanaid;Password=humanaid_dev_password"
+services:
+  db:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: humanaid
+      POSTGRES_USER: humanaid
+      POSTGRES_PASSWORD: humanaid_dev_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - humanaid_pg:/var/lib/postgresql/data
+volumes:
+  humanaid_pg:
