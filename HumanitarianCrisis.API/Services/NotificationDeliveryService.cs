@@ -1,6 +1,7 @@
 using System.Net;
-using System.Net.Mail;
 using System.Net.Http.Headers;
+using System.Net.Http.Json;
+using System.Net.Mail;
 using System.Text;
 
 namespace HumanitarianCrisis.API.Services;
@@ -18,10 +19,18 @@ public sealed class NotificationDeliveryService(IConfiguration configuration, IH
 
     private async Task<DeliveryResult> SendEmailAsync(string recipient, string subject, string message, CancellationToken cancellationToken)
     {
-        var host = configuration["Notifications:Email:SmtpHost"];
         var from = configuration["Notifications:Email:From"];
+        var brevoKey = configuration["Notifications:Email:BrevoApiKey"];
+        if (!string.IsNullOrWhiteSpace(brevoKey) && !string.IsNullOrWhiteSpace(from))
+            return await SendBrevoEmailAsync(brevoKey, from, recipient, subject, message, cancellationToken);
+
+        var resendKey = configuration["Notifications:Email:ResendApiKey"];
+        if (!string.IsNullOrWhiteSpace(resendKey) && !string.IsNullOrWhiteSpace(from))
+            return await SendResendEmailAsync(resendKey, from, recipient, subject, message, cancellationToken);
+
+        var host = configuration["Notifications:Email:SmtpHost"];
         if (string.IsNullOrWhiteSpace(host) || string.IsNullOrWhiteSpace(from))
-            return new DeliveryResult("NotConfigured", "SMTP settings are not configured.");
+            return new DeliveryResult("NotConfigured", "Email provider settings are not configured.");
 
         try
         {
@@ -42,6 +51,60 @@ public sealed class NotificationDeliveryService(IConfiguration configuration, IH
         {
             logger.LogWarning(ex, "Email delivery failed.");
             return new DeliveryResult("Failed", "SMTP delivery failed. Check the server logs and provider settings.");
+        }
+    }
+
+    private async Task<DeliveryResult> SendBrevoEmailAsync(string apiKey, string from, string recipient, string subject, string message, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var client = httpClientFactory.CreateClient("email");
+            using var request = new HttpRequestMessage(HttpMethod.Post, "https://api.brevo.com/v3/smtp/email");
+            request.Headers.Add("api-key", apiKey);
+            request.Content = JsonContent.Create(new
+            {
+                sender = new { name = "HUMANAID", email = from },
+                to = new[] { new { email = recipient } },
+                subject,
+                textContent = message
+            });
+            using var response = await client.SendAsync(request, cancellationToken);
+            if (response.IsSuccessStatusCode) return new DeliveryResult("Sent");
+            var body = await response.Content.ReadAsStringAsync(cancellationToken);
+            logger.LogWarning("Brevo email delivery returned HTTP {StatusCode}: {Body}", (int)response.StatusCode, body);
+            return new DeliveryResult("Failed", $"Brevo rejected the email (HTTP {(int)response.StatusCode}).");
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Brevo email delivery failed.");
+            return new DeliveryResult("Failed", "Brevo email delivery failed. Check the server logs.");
+        }
+    }
+
+    private async Task<DeliveryResult> SendResendEmailAsync(string apiKey, string from, string recipient, string subject, string message, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var client = httpClientFactory.CreateClient("email");
+            using var request = new HttpRequestMessage(HttpMethod.Post, "https://api.resend.com/emails");
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
+            request.Content = JsonContent.Create(new
+            {
+                from,
+                to = new[] { recipient },
+                subject,
+                text = message
+            });
+            using var response = await client.SendAsync(request, cancellationToken);
+            if (response.IsSuccessStatusCode) return new DeliveryResult("Sent");
+            var body = await response.Content.ReadAsStringAsync(cancellationToken);
+            logger.LogWarning("Resend email delivery returned HTTP {StatusCode}: {Body}", (int)response.StatusCode, body);
+            return new DeliveryResult("Failed", $"Resend rejected the email (HTTP {(int)response.StatusCode}).");
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Resend email delivery failed.");
+            return new DeliveryResult("Failed", "Resend email delivery failed. Check the server logs.");
         }
     }
 

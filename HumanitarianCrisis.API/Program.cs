@@ -110,6 +110,7 @@ builder.Services.AddSingleton<TokenService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<PasswordResetService>();
 builder.Services.AddHttpClient("twilio", client => client.Timeout = TimeSpan.FromSeconds(15));
+builder.Services.AddHttpClient("email", client => client.Timeout = TimeSpan.FromSeconds(15));
 builder.Services.AddScoped<NotificationDeliveryService>();
 
 builder.Services
