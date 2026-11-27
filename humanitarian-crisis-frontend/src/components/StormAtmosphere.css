@@ -13,7 +13,7 @@
   display: block;
 }
 
-/* Ambient lightning screen flash (soft twilight ambient glow - non-distracting) */
+/* Ambient lightning screen flash (dimmed, soft twilight glow - gentle & non-distracting) */
 .storm-lightning-flash {
   position: fixed;
   inset: 0;
@@ -22,14 +22,14 @@
   pointer-events: none;
   z-index: 2;
   background: radial-gradient(
-    circle at 50% 12%,
-    rgba(210, 240, 255, 0.28) 0%,
-    rgba(140, 205, 245, 0.16) 35%,
-    rgba(60, 140, 200, 0.07) 70%,
-    rgba(10, 30, 60, 0.01) 100%
+    circle at 50% 10%,
+    rgba(180, 220, 245, 0.14) 0%,
+    rgba(110, 170, 220, 0.07) 35%,
+    rgba(35, 90, 150, 0.02) 70%,
+    transparent 100%
   );
   mix-blend-mode: screen;
-  transition: opacity 0.08s ease-out;
+  transition: opacity 0.12s ease-out;
 }
 
 /* Storm Controller Widget - Fixed Bottom-Left */

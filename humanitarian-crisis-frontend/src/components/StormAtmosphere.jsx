@@ -170,8 +170,14 @@ export default function StormAtmosphere({ enabled = true, flashOnMount = false }
     }
   });
   const [lightningFlash, setLightningFlash] = useState(0); // 0 to 1 opacity
+  const lightningFlashRef = useRef(0);
   const [stormLevel, setStormLevel] = useState('storm'); // 'storm' | 'calm' | 'off'
   const [minimized, setMinimized] = useState(true);
+
+  const updateLightningFlash = (val) => {
+    lightningFlashRef.current = val;
+    setLightningFlash(val);
+  };
 
   // Toggle Sound
   const toggleAudio = useCallback(async () => {
@@ -217,38 +223,39 @@ export default function StormAtmosphere({ enabled = true, flashOnMount = false }
     window.addEventListener('resize', handleResize);
 
     // Realistic Raindrop Generator with 3D Depth Layers (Background, Midground, Foreground)
+    // Slower, graceful, peaceful rain speed
     const isMobile = width < 768;
-    const totalDrops = isMobile ? (stormLevel === 'storm' ? 75 : 40) : (stormLevel === 'storm' ? 160 : 80);
+    const totalDrops = isMobile ? (stormLevel === 'storm' ? 70 : 35) : (stormLevel === 'storm' ? 145 : 70);
 
     const drops = [];
     for (let i = 0; i < totalDrops; i++) {
-      // 3 Layers: 0 = Far (tiny, slow), 1 = Mid (steady), 2 = Near (fast, longer)
+      // 3 Layers: 0 = Far (tiny, very slow), 1 = Mid (calm, steady), 2 = Near (gentle foreground)
       const layer = Math.random() < 0.45 ? 0 : Math.random() < 0.8 ? 1 : 2;
 
       drops.push({
         layer,
         x: Math.random() * (width + 100) - 50,
         y: Math.random() * height,
-        speed: layer === 0 ? (4.5 + Math.random() * 2.5) : layer === 1 ? (7.5 + Math.random() * 3.5) : (11.5 + Math.random() * 4.5),
-        len: layer === 0 ? (10 + Math.random() * 8) : layer === 1 ? (16 + Math.random() * 10) : (26 + Math.random() * 12),
-        baseOpacity: layer === 0 ? (0.09 + Math.random() * 0.08) : layer === 1 ? (0.16 + Math.random() * 0.12) : (0.24 + Math.random() * 0.12),
-        width: layer === 0 ? 0.85 : layer === 1 ? 1.1 : 1.45,
+        speed: layer === 0 ? (1.6 + Math.random() * 1.1) : layer === 1 ? (2.7 + Math.random() * 1.5) : (4.0 + Math.random() * 1.8),
+        len: layer === 0 ? (7 + Math.random() * 5) : layer === 1 ? (11 + Math.random() * 7) : (18 + Math.random() * 8),
+        baseOpacity: layer === 0 ? (0.07 + Math.random() * 0.05) : layer === 1 ? (0.13 + Math.random() * 0.07) : (0.19 + Math.random() * 0.08),
+        width: layer === 0 ? 0.75 : layer === 1 ? 0.95 : 1.25,
       });
     }
 
-    // Ground splash particles
+    // Ground splash particles (slow, gentle droplets)
     const splashes = [];
     const addSplash = (x, y, layer) => {
-      if (splashes.length > 45) return;
-      const count = layer === 2 ? 3 : 2;
+      if (splashes.length > 35) return;
+      const count = layer === 2 ? 2 : 1;
       for (let s = 0; s < count; s++) {
         splashes.push({
           x,
           y,
-          vx: (Math.random() - 0.5) * (layer === 2 ? 3.2 : 2.0),
-          vy: -Math.random() * (layer === 2 ? 2.8 : 1.8) - 0.8,
-          radius: layer === 0 ? 0.7 : 1.1,
-          alpha: 0.65,
+          vx: (Math.random() - 0.5) * (layer === 2 ? 1.4 : 0.9),
+          vy: -Math.random() * (layer === 2 ? 1.3 : 0.8) - 0.4,
+          radius: layer === 0 ? 0.5 : 0.8,
+          alpha: 0.45,
         });
       }
     };
@@ -259,7 +266,7 @@ export default function StormAtmosphere({ enabled = true, flashOnMount = false }
     const createLightningBolt = (startX, startY, endX, endY, branchLevel = 0) => {
       const segments = [];
       const distance = Math.hypot(endX - startX, endY - startY);
-      const steps = Math.max(6, Math.floor(distance / 25));
+      const steps = Math.max(6, Math.floor(distance / 28));
       let curX = startX;
       let curY = startY;
 
@@ -267,15 +274,15 @@ export default function StormAtmosphere({ enabled = true, flashOnMount = false }
         const progress = i / steps;
         const targetX = startX + (endX - startX) * progress;
         const targetY = startY + (endY - startY) * progress;
-        const sway = (Math.random() - 0.5) * 45 * (1 - branchLevel * 0.25);
+        const sway = (Math.random() - 0.5) * 40 * (1 - branchLevel * 0.25);
         const nextX = targetX + sway;
         const nextY = targetY;
 
         segments.push({ x1: curX, y1: curY, x2: nextX, y2: nextY });
 
-        if (branchLevel < 2 && Math.random() < 0.28 && i > 2 && i < steps - 1) {
-          const forkAngle = (Math.random() - 0.5) * 1.2;
-          const forkLen = (1 - progress) * distance * 0.5;
+        if (branchLevel < 2 && Math.random() < 0.25 && i > 2 && i < steps - 1) {
+          const forkAngle = (Math.random() - 0.5) * 1.1;
+          const forkLen = (1 - progress) * distance * 0.45;
           const forkEndX = nextX + Math.sin(forkAngle) * forkLen;
           const forkEndY = nextY + Math.cos(forkAngle) * forkLen;
           segments.push(...createLightningBolt(nextX, nextY, forkEndX, forkEndY, branchLevel + 1));
@@ -287,88 +294,81 @@ export default function StormAtmosphere({ enabled = true, flashOnMount = false }
       return segments;
     };
 
-    // Lightning strike scheduler with multi-flash bursts and distinct pauses
+    // Lightning strike scheduler with dimmed, soft flashes and occasional timing
     let lightningTimer = null;
+    let mountTimer = null;
     let lastInteractionTime = 0;
 
     const triggerLightning = (clickX = null, clickY = null, isUserInteraction = false) => {
       if (stormLevel === 'off') return;
 
-      const strikeIntensity = isUserInteraction ? 0.32 : (0.35 + Math.random() * 0.20);
+      // Dimmed intensity (never blinding or harsh)
+      const strikeIntensity = isUserInteraction ? 0.20 : (0.18 + Math.random() * 0.10);
       const startX = clickX !== null
         ? Math.max(40, Math.min(width - 40, clickX + (Math.random() - 0.5) * 60))
         : width * (0.2 + Math.random() * 0.6);
       const endX = clickX !== null ? clickX : startX + (Math.random() - 0.5) * width * 0.35;
-      const endY = clickY !== null ? Math.max(height * 0.35, clickY) : height * (0.6 + Math.random() * 0.3);
+      const endY = clickY !== null ? Math.max(height * 0.35, clickY) : height * (0.55 + Math.random() * 0.25);
 
       const showFlash = (intensity, withBolt, durationMs) => {
         if (withBolt) {
           activeBolt = {
             segments: createLightningBolt(startX, 0, endX, endY),
-            alpha: 0.45,
+            alpha: 0.28,
           };
         }
-        setLightningFlash(intensity);
+        updateLightningFlash(intensity);
         setTimeout(() => {
-          setLightningFlash(0);
+          updateLightningFlash(0);
           if (withBolt) activeBolt = null;
         }, durationMs);
       };
 
       if (isUserInteraction) {
-        // Immediate responsive flash on tap/click (soft, instantaneous, ~220ms total)
-        showFlash(0.24 * strikeIntensity, false, 80);
+        // Immediate, soft & dimmed response on click or tap (~180ms total duration)
+        showFlash(0.14 * strikeIntensity, false, 70);
         setTimeout(() => {
-          showFlash(0.36 * strikeIntensity, true, 140);
-        }, 85);
+          showFlash(0.24 * strikeIntensity, true, 130);
+        }, 75);
 
         if (audioEnabled) {
           setTimeout(() => {
-            if (audioEnabled) audioSingleton.playThunder(0.28);
+            if (audioEnabled) audioSingleton.playThunder(0.16);
           }, 450);
         }
         return;
       }
 
-      // Natural environmental lightning sequence (gentle preliminary sheet flash, pause, soft strike)
-      // 1. Initial preliminary soft sheet flash (120ms)
-      showFlash(0.20 * strikeIntensity, false, 120);
+      // Natural occasional environmental lightning (dimmed, serene, occasional)
+      // 1. Initial faint preliminary sheet flash (100ms)
+      showFlash(0.12 * strikeIntensity, false, 100);
 
-      // PAUSE (350ms of darkness)
+      // PAUSE (420ms of calm darkness)
 
-      // 2. Main lightning strike with visible fractal bolt (200ms) - softened
+      // 2. Soft, dimmed lightning strike with delicate fractal bolt (160ms)
       setTimeout(() => {
-        showFlash(0.38 * strikeIntensity, true, 200);
-      }, 470);
+        showFlash(0.22 * strikeIntensity, true, 160);
+      }, 520);
 
-      // PAUSE (400ms)
-
-      // 3. Occasional subtle after-glow (140ms)
-      if (Math.random() < 0.55) {
-        setTimeout(() => {
-          showFlash(0.16 * strikeIntensity, false, 140);
-        }, 1020);
-      }
-
-      // Thunder rumble following the strike with physical delay
+      // Low, gentle thunder rumble
       if (audioEnabled) {
-        const soundDelay = 550 + Math.random() * 450;
+        const soundDelay = 650 + Math.random() * 450;
         setTimeout(() => {
           if (audioEnabled) {
-            audioSingleton.playThunder(strikeIntensity);
+            audioSingleton.playThunder(strikeIntensity * 0.5);
           }
         }, soundDelay);
       }
     };
 
-    // Global pointerdown listener to trigger lightning flash on user interaction anywhere
+    // Global listener: triggers lightning flash immediately whenever someone clicks or taps anywhere
     const handleDocumentInteraction = (event) => {
       // Don't flash if toggling the audio/storm controller widget
       if (event.target && event.target.closest && event.target.closest('.storm-controller')) {
         return;
       }
       const now = Date.now();
-      if (now - lastInteractionTime < 320) return; // Prevent rapid multi-tap strobing
+      if (now - lastInteractionTime < 280) return; // Prevent rapid multi-tap strobing
       lastInteractionTime = now;
 
       const clientX = event.clientX ?? (event.touches && event.touches[0] ? event.touches[0].clientX : null);
@@ -377,18 +377,19 @@ export default function StormAtmosphere({ enabled = true, flashOnMount = false }
     };
 
     window.addEventListener('pointerdown', handleDocumentInteraction, { capture: true, passive: true });
+    window.addEventListener('touchstart', handleDocumentInteraction, { capture: true, passive: true });
 
     // Flash immediately when requested on mount (e.g., login page opened)
     if (flashOnMount) {
-      setTimeout(() => {
+      mountTimer = setTimeout(() => {
         triggerLightning(null, null, true);
-      }, 300);
+      }, 250);
     }
 
-    // Schedule next random lightning strike (spaced out with calm pauses)
+    // Schedule next random lightning strike (occasional, spaced out with peaceful quiet intervals)
     const scheduleNextStrike = () => {
-      const minInterval = stormLevel === 'storm' ? 14000 : 28000;
-      const randomRange = stormLevel === 'storm' ? 16000 : 32000;
+      const minInterval = stormLevel === 'storm' ? 45000 : 65000;
+      const randomRange = stormLevel === 'storm' ? 40000 : 55000;
       const delay = minInterval + Math.random() * randomRange;
 
       lightningTimer = setTimeout(() => {
@@ -399,26 +400,27 @@ export default function StormAtmosphere({ enabled = true, flashOnMount = false }
 
     scheduleNextStrike();
 
-    // Natural wind oscillation (~10 to 14 degrees)
+    // Natural gentle wind oscillation (~8 to 12 degrees)
     let time = 0;
 
     const render = () => {
-      time += 0.016;
+      time += 0.007; // Gentle, slow wind sway
       ctx.clearRect(0, 0, width, height);
 
-      const windAngle = 0.22 + Math.sin(time * 0.35) * 0.04;
+      const windAngle = 0.18 + Math.sin(time * 0.35) * 0.03;
       const windX = Math.sin(windAngle);
       const windY = Math.cos(windAngle);
 
-      // 1. Draw Realistic Falling Raindrops
+      // 1. Draw Realistic Slow-Falling Raindrops
       ctx.strokeStyle = '#cbe4ff';
       ctx.lineCap = 'round';
 
+      const curFlash = lightningFlashRef.current;
       for (let i = 0; i < drops.length; i++) {
         const d = drops[i];
         ctx.lineWidth = d.width;
         // Drops slightly illuminate when lightning flashes
-        const dynamicAlpha = Math.min(0.7, d.baseOpacity + lightningFlash * 0.35);
+        const dynamicAlpha = Math.min(0.65, d.baseOpacity + curFlash * 0.25);
         ctx.globalAlpha = dynamicAlpha;
 
         ctx.beginPath();
@@ -431,10 +433,10 @@ export default function StormAtmosphere({ enabled = true, flashOnMount = false }
 
         // Reset if reached bottom
         if (d.y > height) {
-          if (Math.random() < 0.22) {
+          if (Math.random() < 0.18) {
             addSplash(d.x, height - 2, d.layer);
           }
-          d.y = -d.len - Math.random() * 25;
+          d.y = -d.len - Math.random() * 20;
           d.x = Math.random() * (width + 100) - 50;
         }
         if (d.x > width + 60) {
@@ -445,7 +447,7 @@ export default function StormAtmosphere({ enabled = true, flashOnMount = false }
       // 2. Draw Ground Splashes
       for (let i = splashes.length - 1; i >= 0; i--) {
         const s = splashes[i];
-        ctx.globalAlpha = s.alpha * 0.55;
+        ctx.globalAlpha = s.alpha * 0.45;
         ctx.fillStyle = '#d8ecff';
         ctx.beginPath();
         ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2);
@@ -453,22 +455,22 @@ export default function StormAtmosphere({ enabled = true, flashOnMount = false }
 
         s.x += s.vx;
         s.y += s.vy;
-        s.vy += 0.16; // gravity
-        s.alpha -= 0.055;
+        s.vy += 0.08; // slow gravity
+        s.alpha -= 0.035;
 
         if (s.alpha <= 0 || s.y > height) {
           splashes.splice(i, 1);
         }
       }
 
-      // 3. Draw Lightning Bolt (soft, realistic & non-distracting)
+      // 3. Draw Lightning Bolt (soft, dimmed & non-distracting)
       if (activeBolt && activeBolt.segments) {
         ctx.save();
-        ctx.shadowColor = '#7dd3fc';
-        ctx.shadowBlur = 8;
-        ctx.strokeStyle = '#f0f9ff';
-        ctx.lineWidth = 1.3;
-        ctx.globalAlpha = (activeBolt.alpha || 0.45) * 0.75;
+        ctx.shadowColor = '#38bdf8';
+        ctx.shadowBlur = 5;
+        ctx.strokeStyle = '#e0f2fe';
+        ctx.lineWidth = 1.0;
+        ctx.globalAlpha = (activeBolt.alpha || 0.25) * 0.5;
 
         ctx.beginPath();
         for (const seg of activeBolt.segments) {
@@ -477,8 +479,8 @@ export default function StormAtmosphere({ enabled = true, flashOnMount = false }
         }
         ctx.stroke();
 
-        ctx.strokeStyle = '#cbf4ff';
-        ctx.lineWidth = 0.8;
+        ctx.strokeStyle = '#bae6fd';
+        ctx.lineWidth = 0.6;
         ctx.stroke();
         ctx.restore();
       }
@@ -493,9 +495,11 @@ export default function StormAtmosphere({ enabled = true, flashOnMount = false }
       cancelAnimationFrame(animId);
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('pointerdown', handleDocumentInteraction, { capture: true });
+      window.removeEventListener('touchstart', handleDocumentInteraction, { capture: true });
       if (lightningTimer) clearTimeout(lightningTimer);
+      if (mountTimer) clearTimeout(mountTimer);
     };
-  }, [enabled, stormLevel, audioEnabled, flashOnMount, lightningFlash]);
+  }, [enabled, stormLevel, audioEnabled, flashOnMount]);
 
   if (!enabled) return null;
 
