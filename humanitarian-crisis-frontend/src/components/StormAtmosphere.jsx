@@ -279,45 +279,65 @@ export default function StormAtmosphere({ enabled = true }) {
       return segments;
     };
 
-    // Lightning strike scheduler
+    // Lightning strike scheduler with multi-flash bursts and distinct pauses
     let lightningTimer = null;
 
     const triggerLightning = () => {
       if (stormLevel !== 'storm') return;
 
-      const strikeIntensity = 0.5 + Math.random() * 0.35;
+      const strikeIntensity = 0.65 + Math.random() * 0.35;
       const startX = width * (0.2 + Math.random() * 0.6);
       const endX = startX + (Math.random() - 0.5) * width * 0.35;
       const endY = height * (0.6 + Math.random() * 0.3);
 
-      activeBolt = {
-        segments: createLightningBolt(startX, 0, endX, endY),
-        alpha: 0.85,
+      // Flash execution helper
+      const showFlash = (intensity, withBolt, durationMs) => {
+        if (withBolt) {
+          activeBolt = {
+            segments: createLightningBolt(startX, 0, endX, endY),
+            alpha: 0.95,
+          };
+        }
+        setLightningFlash(intensity);
+        setTimeout(() => {
+          setLightningFlash(0);
+          activeBolt = null;
+        }, durationMs);
       };
 
-      // Slow, smooth multi-flash sequence
-      setLightningFlash(0.35 * strikeIntensity);
-      setTimeout(() => setLightningFlash(0.12), 100);
-      setTimeout(() => setLightningFlash(0.65 * strikeIntensity), 200);
-      setTimeout(() => setLightningFlash(0.25), 400);
-      setTimeout(() => {
-        setLightningFlash(0);
-        activeBolt = null;
-      }, 700);
+      // 1. Initial preliminary flash (160ms)
+      showFlash(0.45 * strikeIntensity, false, 160);
 
-      // Thunder audio with natural distance delay (800ms to 2200ms)
-      const thunderDelay = 800 + Math.random() * 1400;
-      setTimeout(() => {
-        audioSingleton.playThunder(strikeIntensity * 0.75);
-      }, thunderDelay);
+      // PAUSE (420ms of darkness)
 
-      // Occasional strike interval: random between 35 and 80 seconds
-      const nextInterval = 35000 + Math.random() * 45000;
+      // 2. Main powerful lightning strike with visible fractal bolt (260ms)
+      setTimeout(() => {
+        showFlash(0.85 * strikeIntensity, true, 260);
+      }, 580);
+
+      // PAUSE (480ms of darkness)
+
+      // 3. Occasional secondary ambient after-flash (200ms)
+      const hasAfterFlash = Math.random() < 0.7;
+      if (hasAfterFlash) {
+        setTimeout(() => {
+          showFlash(0.38 * strikeIntensity, false, 200);
+        }, 1280);
+      }
+
+      // Thunder rumble following the main strike with realistic physical delay
+      const thunderDelay = 800 + Math.random() * 1100;
+      setTimeout(() => {
+        audioSingleton.playThunder(strikeIntensity * 0.85);
+      }, 580 + thunderDelay);
+
+      // Long pause between occasional lightning events: 25 to 45 seconds
+      const nextInterval = 25000 + Math.random() * 20000;
       lightningTimer = setTimeout(triggerLightning, nextInterval);
     };
 
-    // First occasional lightning strike after visitor has been on the site for 35 to 60 seconds
-    const initialDelay = 35000 + Math.random() * 25000;
+    // First occasional lightning strike after visitor has stayed on the site for 10 to 14 seconds
+    const initialDelay = 10000 + Math.random() * 4000;
     lightningTimer = setTimeout(triggerLightning, initialDelay);
 
     // Wind oscillation angle (~14 to 20 degrees)
