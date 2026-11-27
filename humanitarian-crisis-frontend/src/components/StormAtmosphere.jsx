@@ -213,19 +213,19 @@ export default function StormAtmosphere({ enabled = true }) {
     };
     window.addEventListener('resize', handleResize);
 
-    // Rain drop generator (slow, gentle and occasional)
+    // Rain drop generator (balanced natural rain shower)
     const isMobile = width < 768;
-    const dropCount = isMobile ? (stormLevel === 'storm' ? 35 : 18) : (stormLevel === 'storm' ? 70 : 35);
+    const dropCount = isMobile ? (stormLevel === 'storm' ? 85 : 45) : (stormLevel === 'storm' ? 165 : 85);
 
     const drops = [];
     for (let i = 0; i < dropCount; i++) {
       drops.push({
         x: Math.random() * width,
         y: Math.random() * height,
-        speed: 3.5 + Math.random() * 4.0, // Slow, gentle fall
-        len: 12 + Math.random() * 16,
-        opacity: 0.12 + Math.random() * 0.28, // Soft, non-distracting
-        width: 1.0,
+        speed: 5.5 + Math.random() * 5.0, // Natural steady rain velocity
+        len: 16 + Math.random() * 20,
+        opacity: 0.16 + Math.random() * 0.32,
+        width: Math.random() < 0.25 ? 1.4 : 1.0,
       });
     }
 
@@ -311,13 +311,14 @@ export default function StormAtmosphere({ enabled = true }) {
         audioSingleton.playThunder(strikeIntensity * 0.75);
       }, thunderDelay);
 
-      // Occasional strike interval: every 25 to 55 seconds
-      const nextInterval = 25000 + Math.random() * 30000;
+      // Occasional strike interval: random between 35 and 80 seconds
+      const nextInterval = 35000 + Math.random() * 45000;
       lightningTimer = setTimeout(triggerLightning, nextInterval);
     };
 
-    // First gentle lightning after 14 seconds
-    lightningTimer = setTimeout(triggerLightning, 14000);
+    // First occasional lightning strike after visitor has been on the site for 35 to 60 seconds
+    const initialDelay = 35000 + Math.random() * 25000;
+    lightningTimer = setTimeout(triggerLightning, initialDelay);
 
     // Wind oscillation angle (~14 to 20 degrees)
     let time = 0;
