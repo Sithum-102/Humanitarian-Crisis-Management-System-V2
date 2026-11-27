@@ -9,6 +9,7 @@ import NotificationCenter from './pages/NotificationCenter';
 import AidAssistant from './components/AidAssistant';
 import PortalIntroCards from './components/PortalIntroCards';
 import { applyPageLanguage, LANGUAGE_STORAGE_KEY, languageNames } from './i18n';
+import { validatePhone, validateEmail } from './utils/validation';
 
 function LanguagePicker({ language, onChange }) {
     return (
@@ -1503,6 +1504,23 @@ function RecordModal({ config, record, onSave, onDelete, onClose, busy, error, c
             setLocalError('Occupied cannot exceed capacity.');
             return;
         }
+
+        if (form.phone && form.phone.trim()) {
+            const phoneCheck = validatePhone(form.phone);
+            if (!phoneCheck.isValid) {
+                setLocalError(phoneCheck.error);
+                return;
+            }
+        }
+
+        if (form.email && form.email.trim()) {
+            const emailCheck = validateEmail(form.email);
+            if (!emailCheck.isValid) {
+                setLocalError(emailCheck.error);
+                return;
+            }
+        }
+
         setLocalError('');
         onSave(form);
     }

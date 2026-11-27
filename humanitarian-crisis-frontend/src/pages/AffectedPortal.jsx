@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { api } from "../services/api/client";
 import AidAssistant from "../components/AidAssistant";
 import PortalIntroCards from "../components/PortalIntroCards";
+import { validatePhone, validateEmail } from "../utils/validation";
 
 const confirmationCopy = {
     en: {
@@ -332,6 +333,24 @@ export default function AffectedPortal({ user, onBack, onRequestSubmitted, langu
 
         setSubmitting(true);
         setSubmitError("");
+
+        if (contactPhone.trim()) {
+            const phoneCheck = validatePhone(contactPhone);
+            if (!phoneCheck.isValid) {
+                setSubmitError(phoneCheck.error);
+                setSubmitting(false);
+                return;
+            }
+        }
+
+        if (contactEmail.trim()) {
+            const emailCheck = validateEmail(contactEmail);
+            if (!emailCheck.isValid) {
+                setSubmitError(emailCheck.error);
+                setSubmitting(false);
+                return;
+            }
+        }
 
         const shortLocation = address
             ? address.slice(0, 195)

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { api } from '../services/api/client';
+import { validatePhone, validateEmail } from '../utils/validation';
 
 const emptyForm = { recipientName: '', email: '', phone: '', channels: ['Email'], subject: '', message: '' };
 const dateText = value => value ? new Date(value).toLocaleString() : '—';
@@ -57,6 +58,39 @@ export default function NotificationCenter({ canWrite, session }) {
     async function send(event) {
         event.preventDefault();
         setBusy(true); setError(''); setNotice('');
+
+        if (form.channels.includes('SMS')) {
+            const phoneCheck = validatePhone(form.phone, { required: true });
+            if (!phoneCheck.isValid) {
+                setError(phoneCheck.error);
+                setBusy(false);
+                return;
+            }
+        } else if (form.phone.trim()) {
+            const phoneCheck = validatePhone(form.phone);
+            if (!phoneCheck.isValid) {
+                setError(phoneCheck.error);
+                setBusy(false);
+                return;
+            }
+        }
+
+        if (form.channels.includes('Email')) {
+            const emailCheck = validateEmail(form.email, { required: true });
+            if (!emailCheck.isValid) {
+                setError(emailCheck.error);
+                setBusy(false);
+                return;
+            }
+        } else if (form.email.trim()) {
+            const emailCheck = validateEmail(form.email);
+            if (!emailCheck.isValid) {
+                setError(emailCheck.error);
+                setBusy(false);
+                return;
+            }
+        }
+
         try {
             const result = await api('notifications', {
                 method: 'POST',

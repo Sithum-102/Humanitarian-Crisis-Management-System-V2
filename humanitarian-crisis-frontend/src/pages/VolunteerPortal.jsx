@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { api } from "../services/api/client";
 import PortalIntroCards from "../components/PortalIntroCards";
+import { validatePhone, validateEmail } from "../utils/validation";
 
 function getSavedLanguage() {
     try {
@@ -250,13 +251,28 @@ export default function VolunteerPortal({ user, onBack }) {
         setDonationBusy(true);
         setDonationError("");
         setDonationSubmitted(false);
+
+        const phoneCheck = validatePhone(donorPhone, { required: true });
+        if (!phoneCheck.isValid) {
+            setDonationError(phoneCheck.error);
+            setDonationBusy(false);
+            return;
+        }
+
+        const emailCheck = validateEmail(donorEmail, { required: true });
+        if (!emailCheck.isValid) {
+            setDonationError(emailCheck.error);
+            setDonationBusy(false);
+            return;
+        }
+
         try {
             const receipt = await api("volunteerdonations", {
                 method: "POST",
                 body: {
                     donorName,
-                    phone: donorPhone,
-                    email: donorEmail,
+                    phone: phoneCheck.normalized,
+                    email: emailCheck.normalized,
                     categories: donationCategories.join(", "),
                     itemsDescription: donationItemsDesc,
                     collectionCenter: selectedDropoffHub,

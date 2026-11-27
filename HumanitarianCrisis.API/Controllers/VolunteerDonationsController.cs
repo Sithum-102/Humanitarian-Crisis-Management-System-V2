@@ -23,7 +23,15 @@ public sealed class VolunteerDonationsController(CrisisDbContext db, Notificatio
         donation.Id = 0;
         donation.DonorName = donation.DonorName.Trim();
         donation.Phone = donation.Phone.Trim();
+
+        if (!TryNormalizePhone(donation.Phone, out var normalizedPhone) || string.IsNullOrWhiteSpace(normalizedPhone))
+            return BadRequest(new { message = "Enter a valid phone number, for example 0771234567 or +94771234567." });
+        donation.Phone = normalizedPhone;
+
         donation.Email = string.IsNullOrWhiteSpace(donation.Email) ? null : donation.Email.Trim().ToLowerInvariant();
+        if (!string.IsNullOrWhiteSpace(donation.Email) && !System.Text.RegularExpressions.Regex.IsMatch(donation.Email, @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
+            return BadRequest(new { message = "Enter a valid email address." });
+
         donation.Categories = donation.Categories.Trim();
         donation.ItemsDescription = donation.ItemsDescription.Trim();
         donation.CollectionCenter = donation.CollectionCenter.Trim();
@@ -182,5 +190,19 @@ public sealed class VolunteerDonationsController(CrisisDbContext db, Notificatio
             ? $"Hello {donor},\n\nGood news! A HUMANAID volunteer has accepted your pickup request for donation #{id}. Our volunteer, {volunteerName}, will contact you at {phone} shortly to confirm a safe pickup time and location.\n\nItems: {categories}\nDetails: {details}\n\nPlease keep the items ready for the agreed collection time.\n\nHUMANAID Relief Coordination"
             : $"Hello {donor},\n\nA HUMANAID volunteer, {volunteerName}, has accepted your donation offer (reference #{id}) and will take the items to your selected collection hub. They will contact you at {phone} to coordinate the handover.\n\nItems: {categories}\nDetails: {details}\nCollection hub: {hub}\n\nHUMANAID Relief Coordination";
         return (englishSubject, englishMessage);
+    }
+
+    private static bool TryNormalizePhone(string? input, out string? normalized)
+    {
+        normalized = null;
+        if (string.IsNullOrWhiteSpace(input)) return true;
+        var compact = new string(input.Trim().Where(c => !char.IsWhiteSpace(c) && c != '-' && c != '(' && c != ')' && c != '.').ToArray());
+        if (compact.StartsWith("00", StringComparison.Ordinal)) compact = "+" + compact[2..];
+        else if (compact.StartsWith('0')) compact = "+94" + compact[1..];
+        else if (compact.Length == 9 && compact.All(char.IsDigit)) compact = "+94" + compact;
+        else if (compact.StartsWith("94", StringComparison.Ordinal)) compact = "+" + compact;
+        if (!System.Text.RegularExpressions.Regex.IsMatch(compact, @"^\+[1-9]\d{7,14}$")) return false;
+        normalized = compact;
+        return true;
     }
 }
