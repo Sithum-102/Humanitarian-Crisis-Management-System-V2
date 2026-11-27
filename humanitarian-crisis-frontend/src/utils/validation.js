@@ -4,10 +4,32 @@
  */
 export function sanitizePhoneInput(value) {
   if (!value) return '';
+  const str = String(value);
   // Allow leading + if typed first, but only digits otherwise
-  const hasLeadingPlus = value.startsWith('+');
-  const digitsOnly = value.replace(/\D/g, '').slice(0, 14);
+  const hasLeadingPlus = str.startsWith('+');
+  const digitsOnly = str.replace(/\D/g, '').slice(0, 14);
   return hasLeadingPlus ? `+${digitsOnly}` : digitsOnly;
+}
+
+/**
+ * Event handler to completely block non-numeric keystrokes in phone inputs.
+ */
+export function handlePhoneKeyDown(e) {
+  if (
+    ['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Enter', 'Home', 'End'].includes(e.key) ||
+    e.ctrlKey ||
+    e.metaKey
+  ) {
+    return;
+  }
+  // Allow leading + if cursor is at the beginning and input doesn't already contain +
+  if (e.key === '+' && (e.currentTarget.selectionStart === 0) && !e.currentTarget.value.includes('+')) {
+    return;
+  }
+  // Block any non-digit
+  if (!/^[0-9]$/.test(e.key)) {
+    e.preventDefault();
+  }
 }
 
 export function validatePhone(input, { required = false } = {}) {

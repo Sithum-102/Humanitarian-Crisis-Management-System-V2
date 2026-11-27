@@ -9,7 +9,7 @@ import NotificationCenter from './pages/NotificationCenter';
 import AidAssistant from './components/AidAssistant';
 import PortalIntroCards from './components/PortalIntroCards';
 import { applyPageLanguage, LANGUAGE_STORAGE_KEY, languageNames } from './i18n';
-import { validatePhone, validateEmail, sanitizePhoneInput } from './utils/validation';
+import { validatePhone, validateEmail, sanitizePhoneInput, handlePhoneKeyDown } from './utils/validation';
 
 function LanguagePicker({ language, onChange }) {
     return (
@@ -285,6 +285,9 @@ function Header({ active, onMenu, session }) {
             </div>
 
             <div className="topbar-right">
+                <span className="welcome-greeting" style={{ fontSize: "13px", fontWeight: "600", color: "#0f766e", background: "#f0fdfa", padding: "4px 10px", borderRadius: "6px", border: "1px solid #ccfbf1" }}>
+                    Welcome, {session.name || session.email}
+                </span>
                 <span className="environment-badge">
                     <span className="status-dot" />
                     {import.meta.env.DEV ? 'DEVELOPMENT API' : 'LIVE API'}
@@ -1565,6 +1568,8 @@ function RecordModal({ config, record, onSave, onDelete, onClose, busy, error, c
                                         autoComplete={key === 'password' ? 'new-password' : key === 'phone' ? 'tel' : 'off'}
                                         autoFocus={index === 0}
                                         value={form[key] ?? ''}
+                                        inputMode={key === 'phone' ? 'numeric' : undefined}
+                                        onKeyDown={key === 'phone' ? handlePhoneKeyDown : undefined}
                                         onChange={e => update(key, key === 'phone' ? sanitizePhoneInput(e.target.value) : e.target.value)}
                                         placeholder={`Enter ${label.toLowerCase()}`}
                                     />
@@ -1812,8 +1817,9 @@ function App() {
             }
 
             // Public access login / register
+            const nameVal = String(form.get('name') || '').trim();
             const result = showRegister
-                ? await register(String(form.get('name')).trim(), emailVal, password)
+                ? await register(nameVal || emailVal.split('@')[0], emailVal, password)
                 : await login(emailVal, password);
 
             // A public-access sign-in must never open an authorized workspace.
@@ -1823,7 +1829,7 @@ function App() {
             }
 
             setSession({
-                name: result.name || 'Public User',
+                name: result.name || nameVal || 'Public User',
                 email: result.email || emailVal,
                 role: result.role || 'User',
                 userId: result.userId,
@@ -2001,6 +2007,11 @@ function App() {
                         setAuthNotice('');
                     }}
                 />}
+                {showRegister && (
+                    <label>Full Name
+                        <input name="name" type="text" required maxLength="100" placeholder="e.g. John Silva" autoComplete="name" autoFocus />
+                    </label>
+                )}
                 {(authMode === 'login' || authMode === 'register' || authMode === 'forgot') && <label>Email address<input name="email" type="email" required autoComplete="email" /></label>}
                 {(authMode === 'login' || authMode === 'register') && (
                     <>

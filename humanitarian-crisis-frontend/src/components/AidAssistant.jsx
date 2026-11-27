@@ -1,8 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 
-const greeting = (portal) => portal === 'affected'
-  ? 'Hi! I can guide you through requesting emergency aid, checking a saved request, or finding the Safe Shelters page. If you are in immediate danger, contact emergency services now.'
-  : 'Hi! I can help you navigate HUMANAID, review the request workflow, and summarize the current response data. An authorized officer must verify and approve every dispatch.';
+const greeting = (portal, user) => {
+  const name = user?.name ? `, ${user.name}` : '';
+  return portal === 'affected'
+    ? `Hi${name}! I can guide you through requesting emergency aid, checking a saved request, or finding the Safe Shelters page. If you are in immediate danger, contact emergency services now.`
+    : `Hi${name}! I can help you navigate HUMANAID, review the request workflow, and summarize the current response data. An authorized officer must verify and approve every dispatch.`;
+};
 
 const quickActions = (portal) => portal === 'affected'
   ? ['Request emergency help', 'Track my request', 'Find safe shelters']
@@ -11,7 +14,7 @@ const quickActions = (portal) => portal === 'affected'
 export default function AidAssistant({ user, data, portal = 'dashboard', onNavigate }) {
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState('');
-  const [messages, setMessages] = useState(() => [{ id: 'welcome', from: 'assistant', text: greeting(portal), at: new Date() }]);
+  const [messages, setMessages] = useState(() => [{ id: 'welcome', from: 'assistant', text: greeting(portal, user), at: new Date() }]);
   const listRef = useRef(null);
   const inputRef = useRef(null);
   const requests = data?.requests || [];
@@ -29,7 +32,7 @@ export default function AidAssistant({ user, data, portal = 'dashboard', onNavig
   function answerFor(message) {
     const text = message.toLowerCase();
     const isPublic = portal === 'affected';
-    if (/^(hi|hello|hey|ayubowan|හායි|ආයුබෝවන්)/i.test(text.trim())) return 'Ayubowan! Tell me what you need help with. I can guide you through the HUMANAID pages.';
+    if (/^(hi|hello|hey|ayubowan|හායි|ආයුබෝවන්)/i.test(text.trim())) return `Ayubowan${user?.name ? `, ${user.name}` : ''}! Tell me what you need help with. I can guide you through the HUMANAID pages.`;
     if (/urgent|danger|trapped|life|emergency|sos|හදිසි|අනතුර|අවදානම/.test(text)) {
       if (isPublic) {
         onNavigate?.('sos');

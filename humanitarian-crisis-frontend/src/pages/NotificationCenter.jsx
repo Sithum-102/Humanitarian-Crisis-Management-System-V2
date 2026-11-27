@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { api } from '../services/api/client';
-import { validatePhone, validateEmail, sanitizePhoneInput } from '../utils/validation';
+import { validatePhone, validateEmail, sanitizePhoneInput, handlePhoneKeyDown } from '../utils/validation';
 
 const emptyForm = { recipientName: '', email: '', phone: '', channels: ['Email'], subject: '', message: '' };
 const dateText = value => value ? new Date(value).toLocaleString() : '—';
@@ -151,7 +151,7 @@ export default function NotificationCenter({ canWrite, session }) {
                     <div className="form-grid notification-form-grid">
                         <label>Recipient name<input value={form.recipientName} onChange={e => update('recipientName', e.target.value)} placeholder="Optional" maxLength="150" /></label>
                         <label>Email address<input type="email" value={form.email} onChange={e => update('email', e.target.value)} placeholder="person@example.org" /></label>
-                        <label>Phone number<input type="tel" value={form.phone} onChange={e => update('phone', sanitizePhoneInput(e.target.value))} placeholder="+9477..." maxLength={15} /></label>
+                        <label>Phone number<input type="tel" inputMode="numeric" value={form.phone} onKeyDown={handlePhoneKeyDown} onChange={e => update('phone', sanitizePhoneInput(e.target.value))} placeholder="+9477..." maxLength={15} /></label>
                         <fieldset><legend>Delivery channel</legend><label><input type="checkbox" checked={form.channels.includes('Email')} onChange={() => toggleChannel('Email')} /> Email</label><label><input type="checkbox" checked={form.channels.includes('SMS')} onChange={() => toggleChannel('SMS')} /> SMS</label></fieldset>
                         <label className="notification-wide">Email subject<input value={form.subject} onChange={e => update('subject', e.target.value)} placeholder="HUMANAID response update" maxLength="200" /></label>
                         <label className="notification-wide">Message<textarea value={form.message} onChange={e => update('message', e.target.value)} required minLength="2" maxLength="4000" rows="4" placeholder="Write a clear response or safety update…" /></label>

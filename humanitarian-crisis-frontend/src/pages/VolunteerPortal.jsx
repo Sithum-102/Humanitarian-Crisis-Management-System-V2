@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { api } from "../services/api/client";
 import PortalIntroCards from "../components/PortalIntroCards";
-import { validatePhone, validateEmail, sanitizePhoneInput } from "../utils/validation";
+import { validatePhone, validateEmail, sanitizePhoneInput, handlePhoneKeyDown } from "../utils/validation";
 
 function getSavedLanguage() {
     try {
@@ -537,8 +537,10 @@ export default function VolunteerPortal({ user, onBack }) {
                                 <label style={{ display: "block", fontSize: "13px", fontWeight: "700", marginBottom: "6px" }}>Contact Phone Number</label>
                                 <input
                                     type="tel"
+                                    inputMode="numeric"
                                     required
                                     value={donorPhone}
+                                    onKeyDown={handlePhoneKeyDown}
                                     onChange={(e) => setDonorPhone(sanitizePhoneInput(e.target.value))}
                                     placeholder="07X XXX XXXX"
                                     maxLength={15}

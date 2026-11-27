@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { api } from "../services/api/client";
 import AidAssistant from "../components/AidAssistant";
 import PortalIntroCards from "../components/PortalIntroCards";
-import { validatePhone, validateEmail, sanitizePhoneInput } from "../utils/validation";
+import { validatePhone, validateEmail, sanitizePhoneInput, handlePhoneKeyDown } from "../utils/validation";
 
 const confirmationCopy = {
     en: {
@@ -864,7 +864,9 @@ export default function AffectedPortal({ user, onBack, onRequestSubmitted, langu
                                         <label style={{ display: "block", fontSize: "14px", fontWeight: "600", marginBottom: "8px", color: "#0f172a" }}>Mobile number for SMS updates (optional)</label>
                                         <input
                                             type="tel"
+                                            inputMode="numeric"
                                             value={contactPhone}
+                                            onKeyDown={handlePhoneKeyDown}
                                             onChange={event => setContactPhone(sanitizePhoneInput(event.target.value))}
                                             placeholder="0771234567 or +94771234567"
                                             autoComplete="tel"
