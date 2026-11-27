@@ -166,7 +166,7 @@ class StormAudioEngine {
 
 const audioSingleton = new StormAudioEngine();
 
-export default function StormAtmosphere({ enabled = true }) {
+export default function StormAtmosphere({ enabled = true, flashOnMount = false }) {
   const canvasRef = useRef(null);
   const [audioEnabled, setAudioEnabled] = useState(() => {
     try {
@@ -282,13 +282,15 @@ export default function StormAtmosphere({ enabled = true }) {
     // Lightning strike scheduler with multi-flash bursts and distinct pauses
     let lightningTimer = null;
 
-    const triggerLightning = () => {
-      if (stormLevel !== 'storm') return;
+    const triggerLightning = (clickX = null, clickY = null) => {
+      if (stormLevel === 'off') return;
 
-      const strikeIntensity = 0.65 + Math.random() * 0.35;
-      const startX = width * (0.2 + Math.random() * 0.6);
-      const endX = startX + (Math.random() - 0.5) * width * 0.35;
-      const endY = height * (0.6 + Math.random() * 0.3);
+      const strikeIntensity = 0.7 + Math.random() * 0.3;
+      const startX = clickX !== null
+        ? Math.max(40, Math.min(width - 40, clickX + (Math.random() - 0.5) * 60))
+        : width * (0.2 + Math.random() * 0.6);
+      const endX = clickX !== null ? clickX : startX + (Math.random() - 0.5) * width * 0.35;
+      const endY = clickY !== null ? Math.max(height * 0.35, clickY) : height * (0.6 + Math.random() * 0.3);
 
       // Flash execution helper
       const showFlash = (intensity, withBolt, durationMs) => {
@@ -305,40 +307,64 @@ export default function StormAtmosphere({ enabled = true }) {
         }, durationMs);
       };
 
-      // 1. Initial preliminary flash (160ms)
-      showFlash(0.45 * strikeIntensity, false, 160);
+      // 1. Initial preliminary flash (150ms)
+      showFlash(0.45 * strikeIntensity, false, 150);
+
+      // PAUSE (380ms of darkness)
+
+      // 2. Main powerful lightning strike with visible fractal bolt (250ms)
+      setTimeout(() => {
+        showFlash(0.9 * strikeIntensity, true, 250);
+      }, 530);
 
       // PAUSE (420ms of darkness)
 
-      // 2. Main powerful lightning strike with visible fractal bolt (260ms)
-      setTimeout(() => {
-        showFlash(0.85 * strikeIntensity, true, 260);
-      }, 580);
-
-      // PAUSE (480ms of darkness)
-
-      // 3. Occasional secondary ambient after-flash (200ms)
-      const hasAfterFlash = Math.random() < 0.7;
-      if (hasAfterFlash) {
+      // 3. Occasional secondary ambient after-flash (180ms)
+      if (Math.random() < 0.7) {
         setTimeout(() => {
-          showFlash(0.38 * strikeIntensity, false, 200);
-        }, 1280);
+          showFlash(0.38 * strikeIntensity, false, 180);
+        }, 1180);
       }
 
       // Thunder rumble following the main strike with realistic physical delay
-      const thunderDelay = 800 + Math.random() * 1100;
+      const thunderDelay = 650 + Math.random() * 950;
       setTimeout(() => {
         audioSingleton.playThunder(strikeIntensity * 0.85);
-      }, 580 + thunderDelay);
+      }, 530 + thunderDelay);
 
-      // Long pause between occasional lightning events: 25 to 45 seconds
+      // Reset timer for next occasional natural strike (25 to 45 seconds)
+      if (lightningTimer) clearTimeout(lightningTimer);
       const nextInterval = 25000 + Math.random() * 20000;
       lightningTimer = setTimeout(triggerLightning, nextInterval);
     };
 
-    // First occasional lightning strike after visitor has stayed on the site for 10 to 14 seconds
-    const initialDelay = 10000 + Math.random() * 4000;
-    lightningTimer = setTimeout(triggerLightning, initialDelay);
+    // Flash immediately when the login page opens (or on mount if flashOnMount is true)
+    let mountTimer = null;
+    if (flashOnMount) {
+      mountTimer = setTimeout(() => {
+        triggerLightning();
+      }, 350);
+    } else {
+      // First occasional natural lightning after visitor has stayed on the site for 10 to 14 seconds
+      const initialDelay = 10000 + Math.random() * 4000;
+      lightningTimer = setTimeout(triggerLightning, initialDelay);
+    }
+
+    // Trigger a lightning flash whenever someone clicks or taps anywhere on the site
+    let lastClickTime = 0;
+    const handleGlobalPointerDown = (e) => {
+      if (stormLevel === 'off') return;
+      // Slightly throttle so rapid clicking doesn't stack awkwardly
+      const now = Date.now();
+      if (now - lastClickTime < 1100) return;
+      lastClickTime = now;
+
+      const clickX = e.clientX ?? (e.touches && e.touches[0]?.clientX) ?? null;
+      const clickY = e.clientY ?? (e.touches && e.touches[0]?.clientY) ?? null;
+      triggerLightning(clickX, clickY);
+    };
+
+    window.addEventListener('pointerdown', handleGlobalPointerDown, { passive: true });
 
     // Wind oscillation angle (~14 to 20 degrees)
     let time = 0;
@@ -433,9 +459,11 @@ export default function StormAtmosphere({ enabled = true }) {
     return () => {
       cancelAnimationFrame(animId);
       window.removeEventListener('resize', handleResize);
+      window.removeEventListener('pointerdown', handleGlobalPointerDown);
       if (lightningTimer) clearTimeout(lightningTimer);
+      if (mountTimer) clearTimeout(mountTimer);
     };
-  }, [enabled, stormLevel]);
+  }, [enabled, stormLevel, flashOnMount]);
 
   return (
     <>

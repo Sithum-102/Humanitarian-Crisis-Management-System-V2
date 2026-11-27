@@ -2021,7 +2021,7 @@ function App() {
     if (booting) {
         return (
             <>
-                <StormAtmosphere enabled={animations} />
+                <StormAtmosphere enabled={animations} flashOnMount={true} />
                 <main className="auth-page">
                     <PageLanguageTranslator language={language} />
                     <LanguagePicker language={language} onChange={changeLanguage} />
@@ -2033,7 +2033,7 @@ function App() {
 
     if (!session) return (
         <>
-            <StormAtmosphere enabled={animations} />
+            <StormAtmosphere enabled={animations} flashOnMount={true} />
             <main className="auth-page">
                 <form className="auth-card" onSubmit={submitAuth}>
                 <PageLanguageTranslator language={language} />
