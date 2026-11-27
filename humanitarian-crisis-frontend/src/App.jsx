@@ -8,6 +8,7 @@ import PortalRoleSelector from "./pages/PortalRoleSelector";
 import NotificationCenter from './pages/NotificationCenter';
 import AidAssistant from './components/AidAssistant';
 import PortalIntroCards from './components/PortalIntroCards';
+import StormAtmosphere from './components/StormAtmosphere';
 import { applyPageLanguage, LANGUAGE_STORAGE_KEY, languageNames } from './i18n';
 import { validatePhone, validateEmail, sanitizePhoneInput, handlePhoneKeyDown } from './utils/validation';
 
@@ -2019,17 +2020,22 @@ function App() {
 
     if (booting) {
         return (
-            <main className="auth-page">
-                <PageLanguageTranslator language={language} />
-                <LanguagePicker language={language} onChange={changeLanguage} />
-                <div className="boot-card" role="status">✧ HUMANAID<span>Restoring your session…</span></div>
-            </main>
+            <>
+                <StormAtmosphere enabled={animations} />
+                <main className="auth-page">
+                    <PageLanguageTranslator language={language} />
+                    <LanguagePicker language={language} onChange={changeLanguage} />
+                    <div className="boot-card" role="status">✧ HUMANAID<span>Restoring your session…</span></div>
+                </main>
+            </>
         );
     }
 
     if (!session) return (
-        <main className="auth-page">
-            <form className="auth-card" onSubmit={submitAuth}>
+        <>
+            <StormAtmosphere enabled={animations} />
+            <main className="auth-page">
+                <form className="auth-card" onSubmit={submitAuth}>
                 <PageLanguageTranslator language={language} />
                 <LanguagePicker language={language} onChange={changeLanguage} />
                 <div className="auth-brand">✧ HUMANAID <span>COMMAND CENTER</span></div>
@@ -2115,6 +2121,7 @@ function App() {
                 <small>Development integration • Data currently stored in server memory</small>
             </form>
         </main>
+        </>
     );
 
     const canDelete = Boolean(modal) && (modal.page === 'User Management' ? session.role === 'Admin' : canWrite);
@@ -2125,6 +2132,7 @@ function App() {
         const pendingOfficerRequests = isPublicSession ? [] : (data.requests || []).filter(request => (request.status || 'Pending') === 'Pending');
         return (
             <>
+                <StormAtmosphere enabled={animations} />
                 <PageLanguageTranslator language={language} />
                 <LanguagePicker language={language} onChange={changeLanguage} />
                 <SelectRole
@@ -2145,13 +2153,21 @@ function App() {
     }
 
     if (session && selectedPortal === 'affected') {
-  return <><PageLanguageTranslator language={language} /><LanguagePicker language={language} onChange={changeLanguage} /><AffectedPortal user={session} language={language} onBack={() => setSelectedPortal('portal-selection')} /></>;
-}
+        return (
+            <>
+                <StormAtmosphere enabled={animations} />
+                <PageLanguageTranslator language={language} />
+                <LanguagePicker language={language} onChange={changeLanguage} />
+                <AffectedPortal user={session} language={language} onBack={() => setSelectedPortal('portal-selection')} />
+            </>
+        );
+    }
 
-   // 2. Volunteer portal eka thoruwoth:
+    // 2. Volunteer portal eka thoruwoth:
     if (session && selectedPortal === 'volunteer') {
         return (
             <>
+                <StormAtmosphere enabled={animations} />
                 <PageLanguageTranslator language={language} />
                 <LanguagePicker language={language} onChange={changeLanguage} />
                 <VolunteerPortal user={session} onBack={() => setSelectedPortal('portal-selection')} />
@@ -2159,10 +2175,12 @@ function App() {
             </>
         );
     }
+
     // 3. Emergency Coordination (coordination) thoruwoth:
     if (session && selectedPortal === 'coordination') {
         return (
             <>
+                <StormAtmosphere enabled={animations} />
                 <PageLanguageTranslator language={language} />
                 <LanguagePicker language={language} onChange={changeLanguage} />
                 <CommandCenterWorkspace
@@ -2197,6 +2215,7 @@ function App() {
 
     return (
         <div className="app-shell">
+            <StormAtmosphere enabled={animations} />
             <PageLanguageTranslator language={language} />
             <LanguagePicker language={language} onChange={changeLanguage} />
             <Sidebar

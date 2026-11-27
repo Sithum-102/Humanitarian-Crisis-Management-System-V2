@@ -1,0 +1,241 @@
+/* ==========================================================================
+   Storm Atmosphere: Canvas, Lightning Flash & Controls
+   ========================================================================== */
+
+/* Fullscreen rain & lightning canvas behind interactive UI */
+.storm-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 1;
+  display: block;
+}
+
+/* Ambient lightning screen flash */
+.storm-lightning-flash {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 2;
+  background: radial-gradient(
+    circle at 50% 15%,
+    rgba(235, 250, 255, 0.92) 0%,
+    rgba(175, 230, 255, 0.75) 35%,
+    rgba(90, 190, 255, 0.35) 70%,
+    rgba(20, 70, 120, 0.15) 100%
+  );
+  mix-blend-mode: screen;
+}
+
+/* Storm Controller Widget - Fixed Bottom-Left */
+.storm-controller {
+  position: fixed;
+  bottom: 18px;
+  left: 18px;
+  z-index: 990;
+  font-family: inherit;
+}
+
+/* Minimized Pill Button */
+.storm-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 24px;
+  border: 1px solid rgba(135, 230, 205, 0.35);
+  background: rgba(8, 28, 25, 0.78);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  color: #e2fbf5;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.32);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.storm-pill-btn:hover {
+  background: rgba(14, 45, 40, 0.92);
+  border-color: rgba(140, 245, 215, 0.6);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.42);
+}
+
+.storm-icon {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.storm-label {
+  letter-spacing: 0.3px;
+}
+
+.storm-sound-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #34d399;
+  box-shadow: 0 0 8px #34d399;
+  animation: stormPulse 2s infinite;
+}
+
+@keyframes stormPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.85); }
+}
+
+/* Expanded Storm Control Panel */
+.storm-panel {
+  width: 290px;
+  max-width: calc(100vw - 36px);
+  padding: 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(140, 230, 205, 0.35);
+  background: rgba(7, 24, 22, 0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  color: #f1fcf8;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+  animation: stormSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes stormSlideUp {
+  from { opacity: 0; transform: translateY(12px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.storm-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.storm-panel-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.storm-close-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  color: #b9d8d0;
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.15s ease;
+}
+
+.storm-close-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
+.storm-panel-desc {
+  font-size: 11px;
+  color: #a4cec4;
+  line-height: 1.45;
+  margin: 0 0 14px;
+}
+
+.storm-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.storm-audio-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(135, 230, 205, 0.3);
+  background: rgba(14, 45, 40, 0.65);
+  color: #e2fbf5;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.storm-audio-toggle:hover {
+  background: rgba(18, 56, 50, 0.85);
+  border-color: rgba(140, 245, 215, 0.5);
+}
+
+.storm-audio-toggle.is-active {
+  background: rgba(13, 148, 110, 0.55);
+  border-color: #34d399;
+  color: #ffffff;
+  box-shadow: 0 0 16px rgba(52, 211, 153, 0.3);
+}
+
+.storm-intensity-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.storm-intensity-label {
+  font-size: 11px;
+  color: #92bfb4;
+  font-weight: 600;
+}
+
+.storm-intensity-buttons {
+  display: flex;
+  gap: 6px;
+}
+
+.storm-intensity-buttons button {
+  flex: 1;
+  padding: 7px 6px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.06);
+  color: #c7e9df;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.storm-intensity-buttons button:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+.storm-intensity-buttons button.is-selected {
+  background: rgba(16, 120, 94, 0.6);
+  border-color: #4ade80;
+  color: #ffffff;
+}
+
+/* Mobile responsive placement */
+@media (max-width: 768px) {
+  .storm-controller {
+    bottom: 12px;
+    left: 12px;
+  }
+  .storm-pill-btn {
+    padding: 7px 11px;
+    font-size: 12px;
+  }
+}
