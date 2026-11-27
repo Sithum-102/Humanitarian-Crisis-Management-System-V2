@@ -110,7 +110,16 @@ public sealed class NotificationDeliveryService(IConfiguration configuration, IH
 
     private async Task<DeliveryResult> SendSmsAsync(string recipient, string message, CancellationToken cancellationToken)
     {
-        // 1. TextBee Free Android SMS Gateway (uses your Android phone + SIM card)
+        // 1. Notify.lk (Sri Lanka SMS Gateway - 100% cloud, no apps needed)
+        var notifyLkUserId = configuration["Notifications:Sms:NotifyLkUserId"];
+        var notifyLkApiKey = configuration["Notifications:Sms:NotifyLkApiKey"];
+        var notifyLkSenderId = configuration["Notifications:Sms:NotifyLkSenderId"];
+        if (!string.IsNullOrWhiteSpace(notifyLkUserId) && !string.IsNullOrWhiteSpace(notifyLkApiKey))
+        {
+            return await SendNotifyLkSmsAsync(notifyLkUserId, notifyLkApiKey, notifyLkSenderId, recipient, message, cancellationToken);
+        }
+
+        // 2. TextBee Free Android SMS Gateway (uses your Android phone + SIM card)
         var textBeeApiKey = configuration["Notifications:Sms:TextBeeApiKey"];
         var textBeeDeviceId = configuration["Notifications:Sms:TextBeeDeviceId"];
         if (!string.IsNullOrWhiteSpace(textBeeApiKey) && !string.IsNullOrWhiteSpace(textBeeDeviceId))
@@ -118,14 +127,14 @@ public sealed class NotificationDeliveryService(IConfiguration configuration, IH
             return await SendTextBeeSmsAsync(textBeeApiKey, textBeeDeviceId, recipient, message, cancellationToken);
         }
 
-        // 2. Generic HTTP SMS Gateway (e.g. self-hosted Android Gateway / Webhook)
+        // 3. Generic HTTP SMS Gateway (e.g. self-hosted Android Gateway / Webhook)
         var gatewayUrl = configuration["Notifications:Sms:GatewayUrl"];
         if (!string.IsNullOrWhiteSpace(gatewayUrl))
         {
             return await SendGenericGatewaySmsAsync(gatewayUrl, recipient, message, cancellationToken);
         }
 
-        // 3. Twilio SMS
+        // 4. Twilio SMS
         var accountSid = configuration["Notifications:Sms:TwilioAccountSid"];
         var authToken = configuration["Notifications:Sms:TwilioAuthToken"];
         var from = configuration["Notifications:Sms:TwilioFromNumber"];
@@ -134,7 +143,61 @@ public sealed class NotificationDeliveryService(IConfiguration configuration, IH
             return await SendTwilioSmsAsync(accountSid, authToken, from, recipient, message, cancellationToken);
         }
 
-        return new DeliveryResult("NotConfigured", "SMS provider settings (Android Gateway or Twilio) are not configured.");
+        return new DeliveryResult("NotConfigured", "SMS provider settings (Notify.lk, Android Gateway, or Twilio) are not configured.");
+    }
+
+    private async Task<DeliveryResult> SendNotifyLkSmsAsync(string userId, string apiKey, string? senderId, string recipient, string message, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var formattedPhone = FormatSriLankanPhone(recipient);
+            var client = httpClientFactory.CreateClient();
+            client.Timeout = TimeSpan.FromSeconds(20);
+
+            var postData = new Dictionary<string, string>
+            {
+                ["user_id"] = userId.Trim(),
+                ["api_key"] = apiKey.Trim(),
+                ["sender_id"] = string.IsNullOrWhiteSpace(senderId) ? "NotifyDEMO" : senderId.Trim(),
+                ["to"] = formattedPhone,
+                ["message"] = message
+            };
+
+            using var content = new FormUrlEncodedContent(postData);
+            using var response = await client.PostAsync("https://app.notify.lk/api/v1/send", content, cancellationToken);
+
+            var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
+            if (response.IsSuccessStatusCode && (responseBody.Contains("\"status\":\"success\"", StringComparison.OrdinalIgnoreCase) || responseBody.Contains("success", StringComparison.OrdinalIgnoreCase)))
+            {
+                return new DeliveryResult("Sent");
+            }
+
+            logger.LogWarning("Notify.lk returned error (HTTP {Code}): {Body}", (int)response.StatusCode, responseBody);
+            return new DeliveryResult("Failed", $"Notify.lk rejected: {responseBody}");
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Notify.lk delivery failed.");
+            return new DeliveryResult("Failed", "Notify.lk delivery failed. Check network or credentials.");
+        }
+    }
+
+    private static string FormatSriLankanPhone(string rawPhone)
+    {
+        var digits = new string(rawPhone.Where(char.IsDigit).ToArray());
+        if (digits.StartsWith("0") && digits.Length == 10)
+        {
+            return "94" + digits.Substring(1);
+        }
+        if (digits.StartsWith("94") && digits.Length >= 11)
+        {
+            return digits;
+        }
+        if (digits.Length == 9 && (digits.StartsWith("7") || digits.StartsWith("1")))
+        {
+            return "94" + digits;
+        }
+        return digits;
     }
 
     private async Task<DeliveryResult> SendTextBeeSmsAsync(string apiKey, string deviceId, string recipient, string message, CancellationToken cancellationToken)
