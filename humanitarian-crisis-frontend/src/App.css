@@ -2361,12 +2361,196 @@ tbody tr,
     .aid-assistant-root {
         right: 12px !important;
         bottom: 12px !important;
+        z-index: 1000 !important;
     }
 
     .aid-chat-panel {
         width: calc(100vw - 24px) !important;
         left: 12px !important;
         right: 12px !important;
+    }
+}
+
+/* ==========================================================================
+   Mobile Shell & Dashboard Layout Fixes (Screens <= 900px)
+   ========================================================================== */
+@media (max-width: 900px) {
+    .app-shell {
+        display: block !important;
+        position: relative !important;
+        width: 100% !important;
+        max-width: 100vw !important;
+        overflow-x: hidden !important;
+    }
+
+    .main {
+        position: relative !important;
+        width: 100% !important;
+        max-width: 100vw !important;
+        min-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow-x: hidden !important;
+        display: block !important;
+    }
+
+    /* Off-canvas mobile drawer */
+    .sidebar {
+        position: fixed !important;
+        top: 0 !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        width: 290px !important;
+        max-width: 84vw !important;
+        height: 100vh !important;
+        height: 100dvh !important;
+        flex: none !important;
+        z-index: 10000 !important;
+        transform: translateX(-105%) !important;
+        transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        box-shadow: none !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch;
+        background: rgba(7, 24, 22, 0.96) !important;
+        backdrop-filter: blur(24px) !important;
+        -webkit-backdrop-filter: blur(24px) !important;
+        border-right: 1px solid rgba(255, 255, 255, 0.16) !important;
+    }
+
+    .sidebar.sidebar-open {
+        transform: translateX(0) !important;
+        visibility: visible !important;
+        pointer-events: auto !important;
+        box-shadow: 15px 0 45px rgba(0, 0, 0, 0.8) !important;
+    }
+
+    .scrim {
+        display: block !important;
+        position: fixed !important;
+        inset: 0 !important;
+        z-index: 9999 !important;
+        background: rgba(3, 14, 25, 0.75) !important;
+        backdrop-filter: blur(4px) !important;
+        -webkit-backdrop-filter: blur(4px) !important;
+        cursor: pointer;
+    }
+
+    .menu-button {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 42px !important;
+        height: 42px !important;
+        min-width: 42px !important;
+        border-radius: 9px !important;
+        background: rgba(255, 255, 255, 0.12) !important;
+        border: 1px solid rgba(255, 255, 255, 0.22) !important;
+        color: #e2fbf5 !important;
+        font-size: 22px !important;
+        cursor: pointer !important;
+    }
+
+    .topbar {
+        height: auto !important;
+        min-height: 58px !important;
+        padding: 8px 14px !important;
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        gap: 8px !important;
+    }
+
+    .topbar-left {
+        display: flex !important;
+        align-items: center !important;
+        gap: 10px !important;
+        min-width: 0 !important;
+        flex: 1 1 auto !important;
+    }
+
+    .breadcrumb {
+        font-size: 13px !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+    }
+
+    .topbar-right {
+        display: flex !important;
+        align-items: center !important;
+        gap: 8px !important;
+        margin-right: 74px !important; /* Space for the floating language picker */
+        flex-shrink: 0 !important;
+    }
+
+    .welcome-greeting,
+    .environment-badge,
+    .topbar-divider {
+        display: none !important;
+    }
+
+    .avatar {
+        width: 34px !important;
+        height: 34px !important;
+        font-size: 12px !important;
+    }
+
+    .session-strip {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 12px !important;
+        padding: 12px 14px !important;
+        margin-bottom: 16px !important;
+    }
+
+    .session-strip > span {
+        width: 100% !important;
+        font-size: 13px !important;
+        line-height: 1.45 !important;
+        word-break: break-word !important;
+    }
+
+    .session-strip div {
+        width: 100% !important;
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+    }
+
+    .session-strip div button {
+        flex: 1 1 calc(50% - 8px) !important;
+        min-height: 42px !important;
+        font-size: 13px !important;
+        padding: 8px 10px !important;
+        white-space: nowrap !important;
+        text-align: center !important;
+    }
+
+    .page-content {
+        padding: 14px 12px 30px !important;
+        width: 100% !important;
+        max-width: 100vw !important;
+        box-sizing: border-box !important;
+    }
+
+    .stats-grid,
+    .module-metrics,
+    .dashboard-grid {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+    }
+
+    .language-picker {
+        top: 10px !important;
+        right: 10px !important;
+        padding: 5px 8px !important;
+        font-size: 11px !important;
+    }
+    .language-picker select {
+        font-size: 12px !important;
+        min-width: 60px !important;
     }
 }
 

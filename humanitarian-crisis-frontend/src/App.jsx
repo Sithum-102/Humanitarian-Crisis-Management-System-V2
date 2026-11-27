@@ -223,12 +223,39 @@ function Sidebar({ active, navigate, open, close, requests, isPublic = false }) 
         <>
             {open && <button className="scrim" onClick={close} aria-label="Close navigation" />}
             <aside className={`sidebar ${open ? 'sidebar-open' : ''}`}>
-                <div className="brand">
-                    <div className="brand-logo">H</div>
-                    <div>
-                        <strong>HUMANAID</strong>
-                        <small>CRISIS RESPONSE PLATFORM</small>
+                <div className="brand" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div className="brand-logo">H</div>
+                        <div>
+                            <strong>HUMANAID</strong>
+                            <small>CRISIS RESPONSE PLATFORM</small>
+                        </div>
                     </div>
+                    {open && (
+                        <button
+                            type="button"
+                            className="sidebar-mobile-close"
+                            onClick={close}
+                            aria-label="Close navigation"
+                            style={{
+                                background: 'rgba(255, 255, 255, 0.14)',
+                                border: '1px solid rgba(255, 255, 255, 0.22)',
+                                borderRadius: '8px',
+                                color: '#ffffff',
+                                width: '36px',
+                                height: '36px',
+                                minWidth: '36px',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: '18px',
+                                cursor: 'pointer',
+                                padding: 0
+                            }}
+                        >
+                            ✕
+                        </button>
+                    )}
                 </div>
 
                 <div className="workspace">
@@ -2187,7 +2214,7 @@ function App() {
                 <div className="page-content">
                     <div className="session-strip">
                         <span>
-                            ● Connected to HUMANAID API · {session.name || session.email} · <b>{session.role}</b>
+                            ● Connected to HUMANAID API · {session?.name || session?.email || 'Officer'} · <b>{session?.role || 'Viewer'}</b>
                             {lastSync && <> · updated {lastSync.toLocaleTimeString()}</>}
                         </span>
                         <div>
