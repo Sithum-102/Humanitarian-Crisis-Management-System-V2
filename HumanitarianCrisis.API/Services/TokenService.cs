@@ -67,6 +67,7 @@ public sealed class TokenService
             UserId = account.Id,
             Name = account.Name,
             Email = account.Email,
+            Phone = account.Phone,
             Role = account.Role
         };
     }

@@ -30,6 +30,7 @@ public sealed class AuthService
         {
             Name = request.Name.Trim(),
             Email = email,
+            Phone = !string.IsNullOrWhiteSpace(request.Phone) ? request.Phone.Trim() : null,
             Role = "Viewer",
             CreatedAt = DateTime.UtcNow
         };

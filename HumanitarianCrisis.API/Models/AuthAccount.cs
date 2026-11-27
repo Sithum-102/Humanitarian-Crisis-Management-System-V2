@@ -8,6 +8,8 @@ public sealed class AuthAccount
 
     public string Email { get; set; } = string.Empty;
 
+    public string? Phone { get; set; }
+
     public string PasswordHash { get; set; } = string.Empty;
 
     public string Role { get; set; } = "Viewer";

@@ -95,8 +95,12 @@ export async function login(email, password) {
   return result;
 }
 
-export async function register(name, email, password) {
-  const result = await api('auth/register', { method: 'POST', body: { name, email, password }, token: null });
+export async function register(name, email, password, phone = null) {
+  const result = await api('auth/register', {
+    method: 'POST',
+    body: { name, email, password, phone: phone || null },
+    token: null
+  });
   setToken(result.token);
   return result;
 }

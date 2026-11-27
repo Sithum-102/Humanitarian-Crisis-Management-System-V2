@@ -1874,8 +1874,19 @@ function App() {
 
             // Public access login / register
             const nameVal = String(form.get('name') || '').trim();
+            const phoneVal = String(form.get('phone') || '').trim();
+
+            if (showRegister && phoneVal) {
+                const phoneCheck = validatePhone(phoneVal);
+                if (!phoneCheck.isValid) {
+                    setAuthError(phoneCheck.error);
+                    setAuthBusy(false);
+                    return;
+                }
+            }
+
             const result = showRegister
-                ? await register(nameVal || emailVal.split('@')[0], emailVal, password)
+                ? await register(nameVal || emailVal.split('@')[0], emailVal, password, phoneVal || null)
                 : await login(emailVal, password);
 
             // A public-access sign-in must never open an authorized workspace.
@@ -2069,9 +2080,23 @@ function App() {
                     }}
                 />}
                 {showRegister && (
-                    <label>Full Name
-                        <input name="name" type="text" required maxLength="100" placeholder="e.g. John Silva" autoComplete="name" autoFocus />
-                    </label>
+                    <>
+                        <label>Full Name
+                            <input name="name" type="text" required maxLength="100" placeholder="e.g. John Silva" autoComplete="name" autoFocus />
+                        </label>
+                        <label>Phone Number (for SMS updates)
+                            <input
+                                name="phone"
+                                type="tel"
+                                inputMode="numeric"
+                                onKeyDown={handlePhoneKeyDown}
+                                onChange={(e) => { e.target.value = sanitizePhoneInput(e.target.value); }}
+                                maxLength="15"
+                                placeholder="+9477... or 077..."
+                                autoComplete="tel"
+                            />
+                        </label>
+                    </>
                 )}
                 {(authMode === 'login' || authMode === 'register' || authMode === 'forgot') && <label>Email address<input name="email" type="email" required autoComplete="email" /></label>}
                 {(authMode === 'login' || authMode === 'register') && (

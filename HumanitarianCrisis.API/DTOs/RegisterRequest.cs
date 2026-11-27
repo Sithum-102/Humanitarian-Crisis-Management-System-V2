@@ -13,6 +13,10 @@ public sealed class RegisterRequest
     [StringLength(254)]
     public string Email { get; set; } = string.Empty;
 
+    [Phone(ErrorMessage = "Enter a valid phone number.")]
+    [StringLength(32)]
+    public string? Phone { get; set; }
+
     [Required(ErrorMessage = "Password is required.")]
     [StringLength(128, MinimumLength = 8, ErrorMessage = "Password must be 8-128 characters.")]
     public string Password { get; set; } = string.Empty;

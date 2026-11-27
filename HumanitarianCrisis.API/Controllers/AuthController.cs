@@ -1,4 +1,6 @@
+using HumanitarianCrisis.API.Data;
 using HumanitarianCrisis.API.DTOs;
+using HumanitarianCrisis.API.Models;
 using HumanitarianCrisis.API.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
@@ -22,11 +24,89 @@ public sealed class AuthController : ControllerBase
 
     [EnableRateLimiting("auth")]
     [HttpPost("register")]
-    public IActionResult Register(RegisterRequest request)
+    public async Task<IActionResult> Register(
+        RegisterRequest request,
+        [FromServices] NotificationDeliveryService delivery,
+        [FromServices] CrisisDbContext db,
+        [FromServices] ILogger<AuthController> logger,
+        CancellationToken cancellationToken)
     {
         try
         {
             var result = _authService.Register(request);
+
+            // Send Welcome Email
+            try
+            {
+                var emailSubject = "Welcome to HUMANAID Crisis Response";
+                var emailBody = $"Hello {request.Name.Trim()},\n\nWelcome to HUMANAID! Your account has been registered successfully.\n\nYou can now sign in to access emergency response portals, request assistance, or volunteer.\n\nHUMANAID Crisis Operations Team";
+
+                var emailRecord = new NotificationRecord
+                {
+                    Recipient = request.Email.Trim().ToLowerInvariant(),
+                    RecipientName = request.Name.Trim(),
+                    Channel = "Email",
+                    Subject = emailSubject,
+                    Message = emailBody,
+                    Status = "Queued",
+                    Attempts = 0,
+                    CreatedByAccountId = result.UserId,
+                    CreatedByName = "HUMANAID System",
+                    CreatedAt = DateTime.UtcNow
+                };
+                db.Notifications.Add(emailRecord);
+                await db.SaveChangesAsync(cancellationToken);
+
+                var emailResult = await delivery.SendAsync("Email", request.Email.Trim().ToLowerInvariant(), emailSubject, emailBody, cancellationToken);
+                emailRecord.Attempts = 1;
+                emailRecord.Status = emailResult.Status;
+                emailRecord.LastError = emailResult.Error;
+                if (emailResult.Status == "Sent") emailRecord.SentAt = DateTime.UtcNow;
+                await db.SaveChangesAsync(cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Failed to send registration welcome email.");
+            }
+
+            // Send Welcome SMS (if phone number provided)
+            if (!string.IsNullOrWhiteSpace(request.Phone))
+            {
+                try
+                {
+                    var cleanPhone = request.Phone.Trim();
+                    var smsSubject = "HUMANAID Registration";
+                    var smsBody = $"HUMANAID: Welcome {request.Name.Trim()}! Your account has been registered successfully. Contact emergency portals whenever aid is needed.";
+
+                    var smsRecord = new NotificationRecord
+                    {
+                        Recipient = cleanPhone,
+                        RecipientName = request.Name.Trim(),
+                        Channel = "SMS",
+                        Subject = smsSubject,
+                        Message = smsBody,
+                        Status = "Queued",
+                        Attempts = 0,
+                        CreatedByAccountId = result.UserId,
+                        CreatedByName = "HUMANAID System",
+                        CreatedAt = DateTime.UtcNow
+                    };
+                    db.Notifications.Add(smsRecord);
+                    await db.SaveChangesAsync(cancellationToken);
+
+                    var smsResult = await delivery.SendAsync("SMS", cleanPhone, smsSubject, smsBody, cancellationToken);
+                    smsRecord.Attempts = 1;
+                    smsRecord.Status = smsResult.Status;
+                    smsRecord.LastError = smsResult.Error;
+                    if (smsResult.Status == "Sent") smsRecord.SentAt = DateTime.UtcNow;
+                    await db.SaveChangesAsync(cancellationToken);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogWarning(ex, "Failed to send registration welcome SMS.");
+                }
+            }
+
             return Ok(result);
         }
         catch (InvalidOperationException ex)
@@ -99,6 +179,7 @@ public sealed class AuthController : ControllerBase
             UserId = subject,
             Name = name ?? email ?? "Authorized Officer",
             Email = email ?? "officer@humanaid.org",
+            Phone = account?.Phone,
             Role = account?.Role ?? User.FindFirst(ClaimTypes.Role)?.Value ?? "Viewer"
         });
     }

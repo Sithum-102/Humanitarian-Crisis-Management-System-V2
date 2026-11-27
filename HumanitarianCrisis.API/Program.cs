@@ -261,6 +261,7 @@ using (var scope = app.Services.CreateScope())
     await PasswordResetSchema.EnsureAsync(db);
     await RequestWorkflowSchema.EnsureAsync(scope.ServiceProvider.GetRequiredService<CrisisDbContext>());
     await VolunteerPortalSchema.EnsureAsync(db);
+    await AccountSchema.EnsureAsync(db);
     app.Logger.LogInformation("Database ready ({Provider}).", databaseProvider);
 
     var store = scope.ServiceProvider.GetRequiredService<CrisisStore>();
