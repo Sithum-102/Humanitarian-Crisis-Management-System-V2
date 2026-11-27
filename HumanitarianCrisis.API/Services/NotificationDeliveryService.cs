@@ -110,12 +110,107 @@ public sealed class NotificationDeliveryService(IConfiguration configuration, IH
 
     private async Task<DeliveryResult> SendSmsAsync(string recipient, string message, CancellationToken cancellationToken)
     {
+        // 1. TextBee Free Android SMS Gateway (uses your Android phone + SIM card)
+        var textBeeApiKey = configuration["Notifications:Sms:TextBeeApiKey"];
+        var textBeeDeviceId = configuration["Notifications:Sms:TextBeeDeviceId"];
+        if (!string.IsNullOrWhiteSpace(textBeeApiKey) && !string.IsNullOrWhiteSpace(textBeeDeviceId))
+        {
+            return await SendTextBeeSmsAsync(textBeeApiKey, textBeeDeviceId, recipient, message, cancellationToken);
+        }
+
+        // 2. Generic HTTP SMS Gateway (e.g. self-hosted Android Gateway / Webhook)
+        var gatewayUrl = configuration["Notifications:Sms:GatewayUrl"];
+        if (!string.IsNullOrWhiteSpace(gatewayUrl))
+        {
+            return await SendGenericGatewaySmsAsync(gatewayUrl, recipient, message, cancellationToken);
+        }
+
+        // 3. Twilio SMS
         var accountSid = configuration["Notifications:Sms:TwilioAccountSid"];
         var authToken = configuration["Notifications:Sms:TwilioAuthToken"];
         var from = configuration["Notifications:Sms:TwilioFromNumber"];
-        if (string.IsNullOrWhiteSpace(accountSid) || string.IsNullOrWhiteSpace(authToken) || string.IsNullOrWhiteSpace(from))
-            return new DeliveryResult("NotConfigured", "Twilio SMS settings are not configured.");
+        if (!string.IsNullOrWhiteSpace(accountSid) && !string.IsNullOrWhiteSpace(authToken) && !string.IsNullOrWhiteSpace(from))
+        {
+            return await SendTwilioSmsAsync(accountSid, authToken, from, recipient, message, cancellationToken);
+        }
 
+        return new DeliveryResult("NotConfigured", "SMS provider settings (Android Gateway or Twilio) are not configured.");
+    }
+
+    private async Task<DeliveryResult> SendTextBeeSmsAsync(string apiKey, string deviceId, string recipient, string message, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var client = httpClientFactory.CreateClient();
+            client.Timeout = TimeSpan.FromSeconds(25);
+
+            var endpoint = $"https://api.textbee.dev/api/v1/gateway/devices/{Uri.EscapeDataString(deviceId)}/sendSMS";
+            using var request = new HttpRequestMessage(HttpMethod.Post, endpoint);
+            request.Headers.Add("x-api-key", apiKey);
+
+            var payload = new
+            {
+                recipients = new[] { recipient },
+                message = message
+            };
+            request.Content = JsonContent.Create(payload);
+
+            using var response = await client.SendAsync(request, cancellationToken);
+            if (response.IsSuccessStatusCode)
+            {
+                return new DeliveryResult("Sent");
+            }
+
+            var errBody = await response.Content.ReadAsStringAsync(cancellationToken);
+            logger.LogWarning("TextBee Android Gateway error (HTTP {Code}): {Body}", (int)response.StatusCode, errBody);
+            return new DeliveryResult("Failed", $"Android Gateway returned HTTP {(int)response.StatusCode}");
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "TextBee Android Gateway delivery failed.");
+            return new DeliveryResult("Failed", "Android SMS Gateway delivery failed. Check device connection.");
+        }
+    }
+
+    private async Task<DeliveryResult> SendGenericGatewaySmsAsync(string gatewayUrl, string recipient, string message, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var client = httpClientFactory.CreateClient();
+            client.Timeout = TimeSpan.FromSeconds(20);
+            var apiKey = configuration["Notifications:Sms:GatewayApiKey"];
+
+            using var request = new HttpRequestMessage(HttpMethod.Post, gatewayUrl);
+            if (!string.IsNullOrWhiteSpace(apiKey))
+            {
+                request.Headers.Add("x-api-key", apiKey);
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
+            }
+
+            var payload = new
+            {
+                to = recipient,
+                phone = recipient,
+                message = message
+            };
+            request.Content = JsonContent.Create(payload);
+
+            using var response = await client.SendAsync(request, cancellationToken);
+            if (response.IsSuccessStatusCode)
+            {
+                return new DeliveryResult("Sent");
+            }
+            return new DeliveryResult("Failed", $"Gateway returned HTTP {(int)response.StatusCode}");
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Generic SMS Gateway delivery failed.");
+            return new DeliveryResult("Failed", "SMS Gateway request failed.");
+        }
+    }
+
+    private async Task<DeliveryResult> SendTwilioSmsAsync(string accountSid, string authToken, string from, string recipient, string message, CancellationToken cancellationToken)
+    {
         try
         {
             var client = httpClientFactory.CreateClient("twilio");
@@ -135,8 +230,8 @@ public sealed class NotificationDeliveryService(IConfiguration configuration, IH
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "SMS delivery failed.");
-            return new DeliveryResult("Failed", "SMS delivery failed. Check the server logs and provider settings.");
+            logger.LogWarning(ex, "Twilio SMS delivery failed.");
+            return new DeliveryResult("Failed", "Twilio SMS delivery failed. Check provider settings.");
         }
     }
 }

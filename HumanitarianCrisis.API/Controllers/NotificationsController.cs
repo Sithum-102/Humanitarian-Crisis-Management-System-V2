@@ -64,13 +64,20 @@ public sealed class NotificationsController : ControllerBase
             || !string.IsNullOrWhiteSpace(_configuration["Notifications:Email:ResendApiKey"])
             || !string.IsNullOrWhiteSpace(_configuration["Notifications:Email:SmtpHost"]);
 
-        var smsConfigured = !string.IsNullOrWhiteSpace(_configuration["Notifications:Sms:TwilioAccountSid"])
+        var hasTextBee = !string.IsNullOrWhiteSpace(_configuration["Notifications:Sms:TextBeeApiKey"])
+            && !string.IsNullOrWhiteSpace(_configuration["Notifications:Sms:TextBeeDeviceId"]);
+        var hasTwilio = !string.IsNullOrWhiteSpace(_configuration["Notifications:Sms:TwilioAccountSid"])
             && !string.IsNullOrWhiteSpace(_configuration["Notifications:Sms:TwilioAuthToken"]);
+        var hasGeneric = !string.IsNullOrWhiteSpace(_configuration["Notifications:Sms:GatewayUrl"]);
+
+        var smsConfigured = hasTextBee || hasTwilio || hasGeneric;
+        var smsProvider = hasTextBee ? "Android Gateway" : hasTwilio ? "Twilio" : hasGeneric ? "Custom Gateway" : null;
 
         return Ok(new
         {
             emailConfigured,
-            smsConfigured
+            smsConfigured,
+            smsProvider
         });
     }
 

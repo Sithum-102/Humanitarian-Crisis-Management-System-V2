@@ -141,7 +141,7 @@ export default function NotificationCenter({ canWrite, session }) {
 
             <div className="notification-provider-row">
                 <span>Email: {settings?.emailConfigured ? 'Configured' : 'Needs SMTP setup'}</span>
-                <span>SMS: {settings?.smsConfigured ? 'Configured' : 'Needs Twilio setup'}</span>
+                <span>SMS: {settings?.smsConfigured ? (settings?.smsProvider ? `Configured (${settings.smsProvider})` : 'Configured') : 'Needs Android Gateway or Twilio setup'}</span>
                 <small>Provider credentials stay on the API server.</small>
             </div>
 
