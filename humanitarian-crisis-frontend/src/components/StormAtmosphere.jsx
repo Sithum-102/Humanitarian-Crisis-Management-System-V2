@@ -213,19 +213,19 @@ export default function StormAtmosphere({ enabled = true }) {
     };
     window.addEventListener('resize', handleResize);
 
-    // Rain drop generator (fewer particles on mobile for 60fps smoothness)
+    // Rain drop generator (slow, gentle and occasional)
     const isMobile = width < 768;
-    const dropCount = isMobile ? (stormLevel === 'storm' ? 140 : 60) : (stormLevel === 'storm' ? 320 : 130);
+    const dropCount = isMobile ? (stormLevel === 'storm' ? 35 : 18) : (stormLevel === 'storm' ? 70 : 35);
 
     const drops = [];
     for (let i = 0; i < dropCount; i++) {
       drops.push({
         x: Math.random() * width,
         y: Math.random() * height,
-        speed: 16 + Math.random() * 24,
-        len: 18 + Math.random() * 32,
-        opacity: 0.2 + Math.random() * 0.55,
-        width: Math.random() < 0.2 ? 1.8 : 1.1,
+        speed: 3.5 + Math.random() * 4.0, // Slow, gentle fall
+        len: 12 + Math.random() * 16,
+        opacity: 0.12 + Math.random() * 0.28, // Soft, non-distracting
+        width: 1.0,
       });
     }
 
@@ -285,39 +285,39 @@ export default function StormAtmosphere({ enabled = true }) {
     const triggerLightning = () => {
       if (stormLevel !== 'storm') return;
 
-      const strikeIntensity = 0.6 + Math.random() * 0.4;
+      const strikeIntensity = 0.5 + Math.random() * 0.35;
       const startX = width * (0.2 + Math.random() * 0.6);
-      const endX = startX + (Math.random() - 0.5) * width * 0.4;
-      const endY = height * (0.65 + Math.random() * 0.35);
+      const endX = startX + (Math.random() - 0.5) * width * 0.35;
+      const endY = height * (0.6 + Math.random() * 0.3);
 
       activeBolt = {
         segments: createLightningBolt(startX, 0, endX, endY),
-        alpha: 1.0,
+        alpha: 0.85,
       };
 
-      // Multi-flash sequence (Strike -> Quick dip -> Big second flash -> Fade)
-      setLightningFlash(0.65 * strikeIntensity);
-      setTimeout(() => setLightningFlash(0.15), 60);
-      setTimeout(() => setLightningFlash(0.95 * strikeIntensity), 120);
-      setTimeout(() => setLightningFlash(0.35), 230);
+      // Slow, smooth multi-flash sequence
+      setLightningFlash(0.35 * strikeIntensity);
+      setTimeout(() => setLightningFlash(0.12), 100);
+      setTimeout(() => setLightningFlash(0.65 * strikeIntensity), 200);
+      setTimeout(() => setLightningFlash(0.25), 400);
       setTimeout(() => {
         setLightningFlash(0);
         activeBolt = null;
-      }, 380);
+      }, 700);
 
-      // Thunder audio with physical speed-of-sound delay (300ms to 1200ms)
-      const thunderDelay = 350 + Math.random() * 850;
+      // Thunder audio with natural distance delay (800ms to 2200ms)
+      const thunderDelay = 800 + Math.random() * 1400;
       setTimeout(() => {
-        audioSingleton.playThunder(strikeIntensity);
+        audioSingleton.playThunder(strikeIntensity * 0.75);
       }, thunderDelay);
 
-      // Schedule next strike (every 7 to 16 seconds)
-      const nextInterval = 7000 + Math.random() * 9000;
+      // Occasional strike interval: every 25 to 55 seconds
+      const nextInterval = 25000 + Math.random() * 30000;
       lightningTimer = setTimeout(triggerLightning, nextInterval);
     };
 
-    // First lightning after 3 seconds
-    lightningTimer = setTimeout(triggerLightning, 3000);
+    // First gentle lightning after 14 seconds
+    lightningTimer = setTimeout(triggerLightning, 14000);
 
     // Wind oscillation angle (~14 to 20 degrees)
     let time = 0;
