@@ -305,23 +305,32 @@ function Header({ active, onMenu, session }) {
     return (
         <header className="topbar">
             <div className="topbar-left">
-                <button className="menu-button" onClick={onMenu} aria-label="Open navigation">☰</button>
+                <button
+                    className="menu-button"
+                    onClick={onMenu}
+                    aria-label="Open navigation menu"
+                    type="button"
+                >
+                    ☰
+                </button>
                 <div className="breadcrumb">
-                    Workspace <span>/</span> <strong>{active}</strong>
+                    <span>HUMANAID</span>
+                    <span className="breadcrumb-separator">/</span>
+                    <strong>{active}</strong>
                 </div>
             </div>
 
             <div className="topbar-right">
-                <span className="welcome-greeting" style={{ fontSize: "13px", fontWeight: "600", color: "#0f766e", background: "#f0fdfa", padding: "4px 10px", borderRadius: "6px", border: "1px solid #ccfbf1" }}>
-                    Welcome, {session.name || session.email}
+                <span className="welcome-greeting desktop-only">
+                    Welcome, {session?.name || session?.email || 'Officer'}
                 </span>
-                <span className="environment-badge">
+                <span className="environment-badge desktop-only">
                     <span className="status-dot" />
                     {import.meta.env.DEV ? 'DEVELOPMENT API' : 'LIVE API'}
                 </span>
-                <span className="topbar-divider" />
-                <div className="avatar" title={`${session.name || session.email} · ${session.role}`}>
-                    {initials(session.name || session.email)}
+                <span className="topbar-divider desktop-only" />
+                <div className="avatar" title={`${session?.name || session?.email} · ${session?.role}`}>
+                    {initials(session?.name || session?.email)}
                 </div>
             </div>
         </header>
