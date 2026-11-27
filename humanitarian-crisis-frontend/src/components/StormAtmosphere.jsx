@@ -289,11 +289,12 @@ export default function StormAtmosphere({ enabled = true, flashOnMount = false }
 
     // Lightning strike scheduler with multi-flash bursts and distinct pauses
     let lightningTimer = null;
+    let lastInteractionTime = 0;
 
-    const triggerLightning = (clickX = null, clickY = null) => {
+    const triggerLightning = (clickX = null, clickY = null, isUserInteraction = false) => {
       if (stormLevel === 'off') return;
 
-      const strikeIntensity = 0.45 + Math.random() * 0.25;
+      const strikeIntensity = isUserInteraction ? 0.32 : (0.35 + Math.random() * 0.20);
       const startX = clickX !== null
         ? Math.max(40, Math.min(width - 40, clickX + (Math.random() - 0.5) * 60))
         : width * (0.2 + Math.random() * 0.6);
@@ -304,7 +305,7 @@ export default function StormAtmosphere({ enabled = true, flashOnMount = false }
         if (withBolt) {
           activeBolt = {
             segments: createLightningBolt(startX, 0, endX, endY),
-            alpha: 0.60,
+            alpha: 0.45,
           };
         }
         setLightningFlash(intensity);
@@ -314,28 +315,44 @@ export default function StormAtmosphere({ enabled = true, flashOnMount = false }
         }, durationMs);
       };
 
-      // 1. Initial preliminary soft sheet flash (140ms)
-      showFlash(0.25 * strikeIntensity, false, 140);
-
-      // PAUSE (380ms of darkness)
-
-      // 2. Main lightning strike with visible fractal bolt (240ms) - dimmed
-      setTimeout(() => {
-        showFlash(0.55 * strikeIntensity, true, 240);
-      }, 520);
-
-      // PAUSE (420ms of darkness)
-
-      // 3. Occasional secondary ambient after-flash (gentle, 180ms)
-      if (Math.random() < 0.65) {
+      if (isUserInteraction) {
+        // Immediate responsive flash on tap/click (soft, instantaneous, ~220ms total)
+        showFlash(0.24 * strikeIntensity, false, 80);
         setTimeout(() => {
-          showFlash(0.20 * strikeIntensity, false, 180);
-        }, 1160);
+          showFlash(0.36 * strikeIntensity, true, 140);
+        }, 85);
+
+        if (audioEnabled) {
+          setTimeout(() => {
+            if (audioEnabled) audioSingleton.playThunder(0.28);
+          }, 450);
+        }
+        return;
       }
 
-      // Thunder rumble following the main strike with realistic physical delay
+      // Natural environmental lightning sequence (gentle preliminary sheet flash, pause, soft strike)
+      // 1. Initial preliminary soft sheet flash (120ms)
+      showFlash(0.20 * strikeIntensity, false, 120);
+
+      // PAUSE (350ms of darkness)
+
+      // 2. Main lightning strike with visible fractal bolt (200ms) - softened
+      setTimeout(() => {
+        showFlash(0.38 * strikeIntensity, true, 200);
+      }, 470);
+
+      // PAUSE (400ms)
+
+      // 3. Occasional subtle after-glow (140ms)
+      if (Math.random() < 0.55) {
+        setTimeout(() => {
+          showFlash(0.16 * strikeIntensity, false, 140);
+        }, 1020);
+      }
+
+      // Thunder rumble following the strike with physical delay
       if (audioEnabled) {
-        const soundDelay = 580 + Math.random() * 500;
+        const soundDelay = 550 + Math.random() * 450;
         setTimeout(() => {
           if (audioEnabled) {
             audioSingleton.playThunder(strikeIntensity);
@@ -344,24 +361,28 @@ export default function StormAtmosphere({ enabled = true, flashOnMount = false }
       }
     };
 
-    // Global click/tap listener to trigger lightning flash on user interaction
+    // Global pointerdown listener to trigger lightning flash on user interaction anywhere
     const handleDocumentInteraction = (event) => {
+      // Don't flash if toggling the audio/storm controller widget
       if (event.target && event.target.closest && event.target.closest('.storm-controller')) {
         return;
       }
+      const now = Date.now();
+      if (now - lastInteractionTime < 320) return; // Prevent rapid multi-tap strobing
+      lastInteractionTime = now;
+
       const clientX = event.clientX ?? (event.touches && event.touches[0] ? event.touches[0].clientX : null);
       const clientY = event.clientY ?? (event.touches && event.touches[0] ? event.touches[0].clientY : null);
-      triggerLightning(clientX, clientY);
+      triggerLightning(clientX, clientY, true);
     };
 
-    window.addEventListener('click', handleDocumentInteraction, { passive: true });
-    window.addEventListener('touchend', handleDocumentInteraction, { passive: true });
+    window.addEventListener('pointerdown', handleDocumentInteraction, { capture: true, passive: true });
 
     // Flash immediately when requested on mount (e.g., login page opened)
     if (flashOnMount) {
       setTimeout(() => {
-        triggerLightning();
-      }, 350);
+        triggerLightning(null, null, true);
+      }, 300);
     }
 
     // Schedule next random lightning strike (spaced out with calm pauses)
@@ -440,14 +461,14 @@ export default function StormAtmosphere({ enabled = true, flashOnMount = false }
         }
       }
 
-      // 3. Draw Lightning Bolt (soft & dimmed)
+      // 3. Draw Lightning Bolt (soft, realistic & non-distracting)
       if (activeBolt && activeBolt.segments) {
         ctx.save();
-        ctx.shadowColor = '#90e0ef';
-        ctx.shadowBlur = 10;
-        ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 1.6;
-        ctx.globalAlpha = activeBolt.alpha || 0.6;
+        ctx.shadowColor = '#7dd3fc';
+        ctx.shadowBlur = 8;
+        ctx.strokeStyle = '#f0f9ff';
+        ctx.lineWidth = 1.3;
+        ctx.globalAlpha = (activeBolt.alpha || 0.45) * 0.75;
 
         ctx.beginPath();
         for (const seg of activeBolt.segments) {
@@ -457,7 +478,7 @@ export default function StormAtmosphere({ enabled = true, flashOnMount = false }
         ctx.stroke();
 
         ctx.strokeStyle = '#cbf4ff';
-        ctx.lineWidth = 0.9;
+        ctx.lineWidth = 0.8;
         ctx.stroke();
         ctx.restore();
       }
@@ -471,8 +492,7 @@ export default function StormAtmosphere({ enabled = true, flashOnMount = false }
     return () => {
       cancelAnimationFrame(animId);
       window.removeEventListener('resize', handleResize);
-      window.removeEventListener('click', handleDocumentInteraction);
-      window.removeEventListener('touchend', handleDocumentInteraction);
+      window.removeEventListener('pointerdown', handleDocumentInteraction, { capture: true });
       if (lightningTimer) clearTimeout(lightningTimer);
     };
   }, [enabled, stormLevel, audioEnabled, flashOnMount, lightningFlash]);

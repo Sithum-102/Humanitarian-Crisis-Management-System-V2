@@ -307,6 +307,90 @@ const styles = `
 .portal-help-note { display:flex; justify-content:center; flex-wrap:wrap; gap:8px; padding:0 20px 28px; color:rgba(240,255,250,.72); font-size:12px; text-align:center; }
 .portal-help-note strong { color:#fff; }
 .portal-emergency-alert span { font-size:13px; }
+.portal-help-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    background: rgba(4, 20, 18, 0.75);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+.portal-help-modal {
+    position: relative;
+    width: min(540px, 94vw);
+    background: #0d2823;
+    border: 1px solid rgba(101, 229, 195, 0.35);
+    border-radius: 16px;
+    padding: 26px 28px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+    color: #f0fffb;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+.portal-help-modal h3 {
+    margin: 0 0 10px;
+    font-size: 20px;
+    color: #65e5c3;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.portal-help-modal p {
+    margin: 0 0 18px;
+    color: rgba(240, 255, 250, 0.85);
+    font-size: 14px;
+    line-height: 1.5;
+}
+.portal-hotlines-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    margin: 16px 0;
+}
+.portal-hotline-card {
+    display: flex;
+    flex-direction: column;
+    padding: 12px 14px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 10px;
+    text-decoration: none;
+    color: inherit;
+    transition: background 0.15s, border-color 0.15s;
+}
+.portal-hotline-card:hover {
+    background: rgba(101, 229, 195, 0.14);
+    border-color: rgba(101, 229, 195, 0.4);
+}
+.portal-hotline-num {
+    font-size: 22px;
+    font-weight: 800;
+    color: #65e5c3;
+    letter-spacing: 0.04em;
+}
+.portal-hotline-label {
+    font-size: 12px;
+    color: rgba(240, 255, 250, 0.78);
+    margin-top: 2px;
+}
+.portal-help-close-btn {
+    width: 100%;
+    margin-top: 18px;
+    padding: 12px;
+    background: rgba(101, 229, 195, 0.2);
+    border: 1px solid rgba(101, 229, 195, 0.5);
+    border-radius: 10px;
+    color: #dffff5;
+    font: 700 14px 'DM Sans', sans-serif;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.portal-help-close-btn:hover {
+    background: rgba(101, 229, 195, 0.35);
+}
 @media (max-width:760px) {
     .portal-header-actions { width:100%; justify-content:flex-start; }
     .portal-user { padding-left:0; }
@@ -380,6 +464,20 @@ const portalCopy = {
             coordination: ['හදිසි සම්බන්ධීකරණය', 'හදිසි අනතුරු ඇඟවීම් පරීක්ෂා කර, ගලවාගැනීමේ කණ්ඩායම් යොදවා, මෙහෙයුම් කළමනාකරණය කරන්න.', 'මෙහෙයුම් මධ්‍යස්ථානය විවෘත කරන්න'],
             dashboard: ['ප්‍රධාන කළමනාකරණ පුවරුව', 'සම්පත්, නවාතැන්, ස්වේච්ඡා සේවකයන් සහ ආයතනික දත්ත කළමනාකරණය කරන්න.', 'කාර්ය අවකාශය විවෘත කරන්න']
         }
+    },
+    ta: {
+        home: 'முகப்பு', portals: 'பதிலளிப்பு போர்ட்டல்கள்', help: 'உதவி', helpText: 'கணக்கு அல்லது அணுகல் உதவிக்கு, உங்கள் நிறுவன ஒருங்கிணைப்பாளரைத் தொடர்பு கொள்ளவும்.',
+        welcome: 'வணக்கம்', heading: 'உங்கள் பதிலளிப்பு போர்ட்டலைத் தேர்வுசெய்க',
+        subtitle: 'மனிதநேய நிவாரண வலையமைப்பில் எவ்வாறு ஈடுபட விரும்புகிறீர்கள் என்பதைத் தேர்ந்தெடுக்கவும்.',
+        language: 'மொழி', notifications: 'அறிவிப்புகள்', signOut: 'வெளியேறு',
+        activeEmergency: 'செயலில் உள்ள அவசரநிலை', pending: 'நிலுவையில் உள்ள உதவி கோரிக்கைகள்',
+        noNotices: 'புதிய உதவி கோரிக்கைகள் எதுவும் இல்லை.',
+        cards: {
+            affected: ['பாதிக்கப்பட்ட நபர்', 'அவசர உதவி, மருத்துவ உதவி, தங்குமிடம் கோரவும் அல்லது உங்கள் பகுதியில் உள்ள நிலைமையைப் புகாரளிக்கவும்.', 'உதவி கோருக'],
+            volunteer: ['தன்னார்வலர்', 'நிவாரண பணிகளில் இணைந்து பொருட்கள் விநியோகம் மற்றும் சமூகங்களுக்கு களப்பணி ஆதரவு வழங்கவும்.', 'களப்பணியில் இணைக'],
+            coordination: ['அவசர ஒருங்கிணைப்பு', 'அவசர எச்சரிக்கைகளை மதிப்பாய்வு செய்து மீட்புக் குழுக்களை வழிநடத்தவும்.', 'கட்டளை மையத்தைத் திறக்க'],
+            dashboard: ['முதன்மை மேலாண்மை டாஷ்போர்டு', 'வளங்கள், தங்குமிடங்கள், தன்னார்வலர்கள் மற்றும் நிறுவனத் தகவல்களை நிர்வகிக்கவும்.', 'பணியிடத்தைத் திறக்க']
+        }
     }
 };
 
@@ -395,7 +493,8 @@ export default function SelectRole({
 }) {
     const [language, setLanguage] = useState('en');
     const [showNotifications, setShowNotifications] = useState(false);
-    const copy = portalCopy[language];
+    const [showHelpModal, setShowHelpModal] = useState(false);
+    const copy = portalCopy[language] || portalCopy.en;
     const visiblePortals = useMemo(() => {
         // Public and Viewer accounts can open the management dashboard in read-only mode.
         // Keep this fallback here as well as in App.jsx so the portal remains visible
@@ -448,8 +547,16 @@ export default function SelectRole({
                         >
                             <option value="en">EN</option>
                             <option value="si">සිංහල</option>
+                            <option value="ta">தமிழ்</option>
                         </select>
-                        <a className="portal-help-button" href="#portal-help">{copy.help}</a>
+                        <button
+                            type="button"
+                            className="portal-help-button"
+                            onClick={() => setShowHelpModal(true)}
+                            aria-label={copy.help}
+                        >
+                            {copy.help}
+                        </button>
                         <button
                             className="portal-notifications"
                             type="button"
@@ -533,6 +640,45 @@ export default function SelectRole({
                     <strong>{copy.help}</strong>
                     <span>{copy.helpText}</span>
                 </footer>
+
+                {showHelpModal && (
+                    <div className="portal-help-overlay" role="dialog" aria-modal="true" onClick={() => setShowHelpModal(false)}>
+                        <div className="portal-help-modal" onClick={(e) => e.stopPropagation()}>
+                            <h3>🚨 {language === 'si' ? 'හදිසි ඇමතුම් සහ සහාය' : language === 'ta' ? 'அவசர அழைப்புகள் மற்றும் உதவி' : 'Emergency Hotlines & Help'}</h3>
+                            <p>
+                                {language === 'si' 
+                                    ? 'ජීවිතාරක්ෂක හදිසි අවස්ථාවකදී කරුණාකර පහත දැක්වෙන රාජ්‍ය හදිසි සේවා අංක කෙලින්ම අමතන්න:' 
+                                    : language === 'ta'
+                                    ? 'உயிர் காக்கும் அவசரநிலைகளுக்கு பின்வரும் அரசு அவசர சேவைகளை உடனடியாக அழைக்கவும்:'
+                                    : 'For immediate life-threatening emergencies, please dial the national emergency response services directly:'}
+                            </p>
+                            <div className="portal-hotlines-grid">
+                                <a href="tel:119" className="portal-hotline-card">
+                                    <span className="portal-hotline-num">119</span>
+                                    <span className="portal-hotline-label">{language === 'si' ? 'පොලිස් හදිසි අංශය' : language === 'ta' ? 'காவல்துறை அவசர சேவை' : 'Police Emergency'}</span>
+                                </a>
+                                <a href="tel:1990" className="portal-hotline-card">
+                                    <span className="portal-hotline-num">1990</span>
+                                    <span className="portal-hotline-label">{language === 'si' ? '1990 සුවසැරිය ගිලන්රථ' : language === 'ta' ? '1990 சுவசரிய இலவச ஆம்புலன்ஸ்' : '1990 Suwa Seriya Ambulance'}</span>
+                                </a>
+                                <a href="tel:117" className="portal-hotline-card">
+                                    <span className="portal-hotline-num">117</span>
+                                    <span className="portal-hotline-label">{language === 'si' ? 'ආපදා කළමනාකරණ මධ්‍යස්ථානය' : language === 'ta' ? 'அனர்த்த முகாமைத்துவ நிலையம் (DMC)' : 'Disaster Management Centre'}</span>
+                                </a>
+                                <a href="tel:110" className="portal-hotline-card">
+                                    <span className="portal-hotline-num">110</span>
+                                    <span className="portal-hotline-label">{language === 'si' ? 'ගිනි නිවන හමුදාව' : language === 'ta' ? 'தீயணைப்பு மற்றும் மீட்பு' : 'Fire & Rescue Service'}</span>
+                                </a>
+                            </div>
+                            <p style={{ marginTop: '14px', fontSize: '13px', color: 'rgba(240, 255, 250, 0.75)' }}>
+                                {copy.helpText}
+                            </p>
+                            <button type="button" className="portal-help-close-btn" onClick={() => setShowHelpModal(false)}>
+                                {language === 'si' ? 'වසන්න (Close)' : language === 'ta' ? 'மூடுக (Close)' : 'Close'}
+                            </button>
+                        </div>
+                    </div>
+                )}
             </main>
         </>
     );
