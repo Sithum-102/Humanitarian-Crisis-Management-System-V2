@@ -9,7 +9,7 @@ import NotificationCenter from './pages/NotificationCenter';
 import AidAssistant from './components/AidAssistant';
 import PortalIntroCards from './components/PortalIntroCards';
 import { applyPageLanguage, LANGUAGE_STORAGE_KEY, languageNames } from './i18n';
-import { validatePhone, validateEmail } from './utils/validation';
+import { validatePhone, validateEmail, sanitizePhoneInput } from './utils/validation';
 
 function LanguagePicker({ language, onChange }) {
     return (
@@ -1556,16 +1556,16 @@ function RecordModal({ config, record, onSave, onDelete, onClose, busy, error, c
                                     </select>
                                 ) : (
                                     <input
-                                        type={numericFields.includes(key) ? 'number' : key === 'email' ? 'email' : key === 'password' ? 'password' : 'text'}
+                                        type={numericFields.includes(key) ? 'number' : key === 'phone' ? 'tel' : key === 'email' ? 'email' : key === 'password' ? 'password' : 'text'}
                                         min={numericFields.includes(key) ? 0 : undefined}
                                         step={numericFields.includes(key) ? 1 : undefined}
-                                        maxLength={numericFields.includes(key) ? undefined : key === 'password' ? 128 : 200}
+                                        maxLength={numericFields.includes(key) ? undefined : key === 'phone' ? 15 : key === 'password' ? 128 : 200}
                                         minLength={key === 'password' && !(record && !form.password) ? 8 : undefined}
                                         required={!numericFields.includes(key) && !config.optional?.includes(key) && !(key === 'password' && record)}
-                                        autoComplete={key === 'password' ? 'new-password' : 'off'}
+                                        autoComplete={key === 'password' ? 'new-password' : key === 'phone' ? 'tel' : 'off'}
                                         autoFocus={index === 0}
                                         value={form[key] ?? ''}
-                                        onChange={e => update(key, e.target.value)}
+                                        onChange={e => update(key, key === 'phone' ? sanitizePhoneInput(e.target.value) : e.target.value)}
                                         placeholder={`Enter ${label.toLowerCase()}`}
                                     />
                                 )}

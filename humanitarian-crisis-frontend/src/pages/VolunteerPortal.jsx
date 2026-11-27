@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { api } from "../services/api/client";
 import PortalIntroCards from "../components/PortalIntroCards";
-import { validatePhone, validateEmail } from "../utils/validation";
+import { validatePhone, validateEmail, sanitizePhoneInput } from "../utils/validation";
 
 function getSavedLanguage() {
     try {
@@ -539,8 +539,9 @@ export default function VolunteerPortal({ user, onBack }) {
                                     type="tel"
                                     required
                                     value={donorPhone}
-                                    onChange={(e) => setDonorPhone(e.target.value)}
+                                    onChange={(e) => setDonorPhone(sanitizePhoneInput(e.target.value))}
                                     placeholder="07X XXX XXXX"
+                                    maxLength={15}
                                     style={{
                                         width: "100%",
                                         padding: "11px",

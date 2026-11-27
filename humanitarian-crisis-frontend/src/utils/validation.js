@@ -1,8 +1,15 @@
 /**
- * Phone number validation and normalization utility.
- * Supports Sri Lankan local formats (0712345678, 712345678)
- * and international E.164 formats (+94712345678, +14155552671).
+ * Phone number validation and sanitization utility.
+ * Enforces strictly digits (with optional leading '+') and max 14 digits.
  */
+export function sanitizePhoneInput(value) {
+  if (!value) return '';
+  // Allow leading + if typed first, but only digits otherwise
+  const hasLeadingPlus = value.startsWith('+');
+  const digitsOnly = value.replace(/\D/g, '').slice(0, 14);
+  return hasLeadingPlus ? `+${digitsOnly}` : digitsOnly;
+}
+
 export function validatePhone(input, { required = false } = {}) {
   if (!input || !input.trim()) {
     return {
@@ -13,40 +20,38 @@ export function validatePhone(input, { required = false } = {}) {
   }
 
   const raw = input.trim();
-  // Strip whitespace, hyphens, brackets, dots
-  let compact = raw.replace(/[\s\-().]/g, '');
+  const digits = raw.replace(/\D/g, '');
 
-  // Normalize leading 00 to +
-  if (compact.startsWith('00')) {
-    compact = '+' + compact.slice(2);
-  }
-  // Local Sri Lankan format: 07x xxx xxxx -> +947x xxx xxxx
-  else if (compact.startsWith('0') && compact.length === 10) {
-    compact = '+94' + compact.slice(1);
-  }
-  // 9-digit local without leading 0: 7x xxx xxxx -> +947x xxx xxxx
-  else if (/^\d{9}$/.test(compact)) {
-    compact = '+94' + compact;
-  }
-  // Missing + on 94: 947x xxx xxxx -> +947x xxx xxxx
-  else if (compact.startsWith('94') && compact.length === 11) {
-    compact = '+' + compact;
-  }
-
-  // E.164 international regex check: + followed by 8 to 15 digits
-  const e164Regex = /^\+[1-9]\d{7,14}$/;
-  if (!e164Regex.test(compact)) {
+  if (digits.length < 9) {
     return {
       isValid: false,
-      error: 'Enter a valid phone number (e.g. 077 123 4567 or +94 77 123 4567).',
+      error: 'Phone number is too short (min 9 digits, e.g. 0771234567).',
       normalized: null
     };
+  }
+
+  if (digits.length > 14) {
+    return {
+      isValid: false,
+      error: 'Phone number cannot exceed 14 digits.',
+      normalized: null
+    };
+  }
+
+  // Normalize to international E.164
+  let compact = digits;
+  if (compact.startsWith('00')) {
+    compact = compact.slice(2);
+  } else if (compact.startsWith('0') && compact.length === 10) {
+    compact = '94' + compact.slice(1);
+  } else if (compact.length === 9) {
+    compact = '94' + compact;
   }
 
   return {
     isValid: true,
     error: null,
-    normalized: compact
+    normalized: `+${compact}`
   };
 }
 
