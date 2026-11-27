@@ -491,9 +491,8 @@ export default function SelectRole({
     activeIncidents = [],
     onSignOut
 }) {
-    const [language, setLanguage] = useState('en');
+    const [language] = useState('en');
     const [showNotifications, setShowNotifications] = useState(false);
-    const [showHelpModal, setShowHelpModal] = useState(false);
     const copy = portalCopy[language] || portalCopy.en;
     const visiblePortals = useMemo(() => {
         // Public and Viewer accounts can open the management dashboard in read-only mode.
@@ -537,26 +536,6 @@ export default function SelectRole({
                     </nav>
 
                     <div className="portal-header-actions">
-                        <label className="sr-only" htmlFor="portal-language">{copy.language}</label>
-                        <select
-                            id="portal-language"
-                            className="portal-language"
-                            value={language}
-                            onChange={(event) => setLanguage(event.target.value)}
-                            aria-label={copy.language}
-                        >
-                            <option value="en">EN</option>
-                            <option value="si">සිංහල</option>
-                            <option value="ta">தமிழ்</option>
-                        </select>
-                        <button
-                            type="button"
-                            className="portal-help-button"
-                            onClick={() => setShowHelpModal(true)}
-                            aria-label={copy.help}
-                        >
-                            {copy.help}
-                        </button>
                         <button
                             className="portal-notifications"
                             type="button"
@@ -637,48 +616,8 @@ export default function SelectRole({
                 </section>
 
                 <footer id="portal-help" className="portal-help-note">
-                    <strong>{copy.help}</strong>
                     <span>{copy.helpText}</span>
                 </footer>
-
-                {showHelpModal && (
-                    <div className="portal-help-overlay" role="dialog" aria-modal="true" onClick={() => setShowHelpModal(false)}>
-                        <div className="portal-help-modal" onClick={(e) => e.stopPropagation()}>
-                            <h3>🚨 {language === 'si' ? 'හදිසි ඇමතුම් සහ සහාය' : language === 'ta' ? 'அவசர அழைப்புகள் மற்றும் உதவி' : 'Emergency Hotlines & Help'}</h3>
-                            <p>
-                                {language === 'si' 
-                                    ? 'ජීවිතාරක්ෂක හදිසි අවස්ථාවකදී කරුණාකර පහත දැක්වෙන රාජ්‍ය හදිසි සේවා අංක කෙලින්ම අමතන්න:' 
-                                    : language === 'ta'
-                                    ? 'உயிர் காக்கும் அவசரநிலைகளுக்கு பின்வரும் அரசு அவசர சேவைகளை உடனடியாக அழைக்கவும்:'
-                                    : 'For immediate life-threatening emergencies, please dial the national emergency response services directly:'}
-                            </p>
-                            <div className="portal-hotlines-grid">
-                                <a href="tel:119" className="portal-hotline-card">
-                                    <span className="portal-hotline-num">119</span>
-                                    <span className="portal-hotline-label">{language === 'si' ? 'පොලිස් හදිසි අංශය' : language === 'ta' ? 'காவல்துறை அவசர சேவை' : 'Police Emergency'}</span>
-                                </a>
-                                <a href="tel:1990" className="portal-hotline-card">
-                                    <span className="portal-hotline-num">1990</span>
-                                    <span className="portal-hotline-label">{language === 'si' ? '1990 සුවසැරිය ගිලන්රථ' : language === 'ta' ? '1990 சுவசரிய இலவச ஆம்புலன்ஸ்' : '1990 Suwa Seriya Ambulance'}</span>
-                                </a>
-                                <a href="tel:117" className="portal-hotline-card">
-                                    <span className="portal-hotline-num">117</span>
-                                    <span className="portal-hotline-label">{language === 'si' ? 'ආපදා කළමනාකරණ මධ්‍යස්ථානය' : language === 'ta' ? 'அனர்த்த முகாமைத்துவ நிலையம் (DMC)' : 'Disaster Management Centre'}</span>
-                                </a>
-                                <a href="tel:110" className="portal-hotline-card">
-                                    <span className="portal-hotline-num">110</span>
-                                    <span className="portal-hotline-label">{language === 'si' ? 'ගිනි නිවන හමුදාව' : language === 'ta' ? 'தீயணைப்பு மற்றும் மீட்பு' : 'Fire & Rescue Service'}</span>
-                                </a>
-                            </div>
-                            <p style={{ marginTop: '14px', fontSize: '13px', color: 'rgba(240, 255, 250, 0.75)' }}>
-                                {copy.helpText}
-                            </p>
-                            <button type="button" className="portal-help-close-btn" onClick={() => setShowHelpModal(false)}>
-                                {language === 'si' ? 'වසන්න (Close)' : language === 'ta' ? 'மூடுக (Close)' : 'Close'}
-                            </button>
-                        </div>
-                    </div>
-                )}
             </main>
         </>
     );
