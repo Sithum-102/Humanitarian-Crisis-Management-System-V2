@@ -302,7 +302,21 @@ function Sidebar({ active, navigate, open, close, requests, isPublic = false }) 
     );
 }
 
+function formatDisplayName(session) {
+    if (!session) return 'Officer';
+    const name = session.name;
+    if (name && name !== 'null' && name !== 'undefined' && String(name).trim()) {
+        return String(name).trim();
+    }
+    const email = session.email;
+    if (email && email !== 'null' && email !== 'undefined' && String(email).trim()) {
+        return String(email).trim();
+    }
+    return 'Officer';
+}
+
 function Header({ active, onMenu, session }) {
+    const displayName = formatDisplayName(session);
     return (
         <header className="topbar">
             <div className="topbar-left">
@@ -323,15 +337,15 @@ function Header({ active, onMenu, session }) {
 
             <div className="topbar-right">
                 <span className="welcome-greeting desktop-only">
-                    Welcome, {session?.name || session?.email || 'Officer'}
+                    Welcome, {displayName}
                 </span>
                 <span className="environment-badge desktop-only">
                     <span className="status-dot" />
                     {import.meta.env.DEV ? 'DEVELOPMENT API' : 'LIVE API'}
                 </span>
                 <span className="topbar-divider desktop-only" />
-                <div className="avatar" title={`${session?.name || session?.email} · ${session?.role}`}>
-                    {initials(session?.name || session?.email)}
+                <div className="avatar" title={`${displayName} · ${session?.role || 'Viewer'}`}>
+                    {initials(displayName)}
                 </div>
             </div>
         </header>
@@ -1758,7 +1772,12 @@ function App() {
             try {
                 const user = await api('auth/me');
                 if (cancelled) return;
-                setSession(user);
+                const safeName = formatDisplayName(user);
+                setSession({
+                    ...user,
+                    name: safeName,
+                    email: (user.email && user.email !== 'null') ? user.email : 'officer@humanaid.org',
+                });
                 setSelectedPortal('portal-selection');
                 setActive('Dashboard');
                 const result = await loadData(user.role);
@@ -2242,7 +2261,7 @@ function App() {
                 <div className="page-content">
                     <div className="session-strip">
                         <span>
-                            ● Connected to HUMANAID API · {session?.name || session?.email || 'Officer'} · <b>{session?.role || 'Viewer'}</b>
+                            ● Connected to HUMANAID API · {formatDisplayName(session)} · <b>{session?.role || 'Viewer'}</b>
                             {lastSync && <> · updated {lastSync.toLocaleTimeString()}</>}
                         </span>
                         <div>

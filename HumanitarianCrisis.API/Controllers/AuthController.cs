@@ -73,14 +73,33 @@ public sealed class AuthController : ControllerBase
 
     [Authorize]
     [HttpGet("me")]
-    public IActionResult Me()
+    public IActionResult Me([FromServices] HumanitarianCrisis.API.Services.CrisisStore store)
     {
+        var subject = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        HumanitarianCrisis.API.Models.AuthAccount? account = null;
+        if (int.TryParse(subject, out var id))
+        {
+            account = store.Find<HumanitarianCrisis.API.Models.AuthAccount>(id, a => a.Id);
+        }
+
+        var name = !string.IsNullOrWhiteSpace(account?.Name) && account.Name != "null"
+            ? account.Name
+            : (!string.IsNullOrWhiteSpace(User.Identity?.Name) && User.Identity.Name != "null"
+                ? User.Identity.Name
+                : null);
+
+        var email = !string.IsNullOrWhiteSpace(account?.Email) && account.Email != "null"
+            ? account.Email
+            : (!string.IsNullOrWhiteSpace(User.FindFirst(ClaimTypes.Email)?.Value) && User.FindFirst(ClaimTypes.Email)?.Value != "null"
+                ? User.FindFirst(ClaimTypes.Email)?.Value
+                : null);
+
         return Ok(new
         {
-            UserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value,
-            Name = User.Identity?.Name,
-            Email = User.FindFirst(ClaimTypes.Email)?.Value,
-            Role = User.FindFirst(ClaimTypes.Role)?.Value
+            UserId = subject,
+            Name = name ?? email ?? "Authorized Officer",
+            Email = email ?? "officer@humanaid.org",
+            Role = account?.Role ?? User.FindFirst(ClaimTypes.Role)?.Value ?? "Viewer"
         });
     }
 
