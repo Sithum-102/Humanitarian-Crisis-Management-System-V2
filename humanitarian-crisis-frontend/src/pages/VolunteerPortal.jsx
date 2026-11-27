@@ -541,13 +541,42 @@ export default function VolunteerPortal({ user, onBack }) {
                                     value={donorPhone}
                                     onChange={(e) => setDonorPhone(e.target.value)}
                                     placeholder="07X XXX XXXX"
-                                    style={{ width: "100%", padding: "11px", borderRadius: "8px", border: "1px solid #cbd5e1", boxSizing: "border-box" }}
+                                    style={{
+                                        width: "100%",
+                                        padding: "11px",
+                                        borderRadius: "8px",
+                                        border: donorPhone.trim() && !validatePhone(donorPhone, { required: true }).isValid ? "2px solid #ef4444" : "1px solid #cbd5e1",
+                                        boxSizing: "border-box"
+                                    }}
                                 />
+                                {donorPhone.trim() && !validatePhone(donorPhone, { required: true }).isValid && (
+                                    <span style={{ display: "block", color: "#dc2626", fontSize: "12px", marginTop: "4px", fontWeight: "600" }}>
+                                        ⚠️ {validatePhone(donorPhone, { required: true }).error}
+                                    </span>
+                                )}
                             </div>
 
                             <div style={{ marginBottom: "16px" }}>
                                 <label style={{ display: "block", fontSize: "13px", fontWeight: "700", marginBottom: "6px" }}>Email Address</label>
-                                <input type="email" required value={donorEmail} onChange={(e) => setDonorEmail(e.target.value)} placeholder="you@example.com" style={{ width: "100%", padding: "11px", borderRadius: "8px", border: "1px solid #cbd5e1", boxSizing: "border-box" }} />
+                                <input
+                                    type="email"
+                                    required
+                                    value={donorEmail}
+                                    onChange={(e) => setDonorEmail(e.target.value)}
+                                    placeholder="you@example.com"
+                                    style={{
+                                        width: "100%",
+                                        padding: "11px",
+                                        borderRadius: "8px",
+                                        border: donorEmail.trim() && !validateEmail(donorEmail, { required: true }).isValid ? "2px solid #ef4444" : "1px solid #cbd5e1",
+                                        boxSizing: "border-box"
+                                    }}
+                                />
+                                {donorEmail.trim() && !validateEmail(donorEmail, { required: true }).isValid && (
+                                    <span style={{ display: "block", color: "#dc2626", fontSize: "12px", marginTop: "4px", fontWeight: "600" }}>
+                                        ⚠️ {validateEmail(donorEmail, { required: true }).error}
+                                    </span>
+                                )}
                                 <small>We’ll email you when a volunteer accepts your pickup or delivery offer.</small>
                             </div>
 

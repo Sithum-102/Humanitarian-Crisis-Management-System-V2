@@ -837,11 +837,54 @@ export default function AffectedPortal({ user, onBack, onRequestSubmitted, langu
 
                                     <div>
                                         <label style={{ display: "block", fontSize: "14px", fontWeight: "600", marginBottom: "8px", color: "#0f172a" }}>Email for status updates (optional)</label>
-                                        <input type="email" value={contactEmail} onChange={event => setContactEmail(event.target.value)} placeholder="you@example.com" autoComplete="email" style={{ width: "100%", padding: "12px", borderRadius: "10px", border: "1px solid #cbd5e1", backgroundColor: "#ffffff", color: "#0f172a", fontSize: "14px", boxSizing: "border-box" }} />
+                                        <input
+                                            type="email"
+                                            value={contactEmail}
+                                            onChange={event => setContactEmail(event.target.value)}
+                                            placeholder="you@example.com"
+                                            autoComplete="email"
+                                            style={{
+                                                width: "100%",
+                                                padding: "12px",
+                                                borderRadius: "10px",
+                                                border: contactEmail.trim() && !validateEmail(contactEmail).isValid ? "2px solid #ef4444" : "1px solid #cbd5e1",
+                                                backgroundColor: "#ffffff",
+                                                color: "#0f172a",
+                                                fontSize: "14px",
+                                                boxSizing: "border-box"
+                                            }}
+                                        />
+                                        {contactEmail.trim() && !validateEmail(contactEmail).isValid && (
+                                            <span style={{ display: "block", color: "#dc2626", fontSize: "12px", marginTop: "4px", fontWeight: "600" }}>
+                                                ⚠️ {validateEmail(contactEmail).error}
+                                            </span>
+                                        )}
                                     </div>
                                     <div>
                                         <label style={{ display: "block", fontSize: "14px", fontWeight: "600", marginBottom: "8px", color: "#0f172a" }}>Mobile number for SMS updates (optional)</label>
-                                        <input type="tel" value={contactPhone} onChange={event => setContactPhone(event.target.value)} placeholder="0771234567 or +94771234567" autoComplete="tel" maxLength={32} style={{ width: "100%", padding: "12px", borderRadius: "10px", border: "1px solid #cbd5e1", backgroundColor: "#ffffff", color: "#0f172a", fontSize: "14px", boxSizing: "border-box" }} />
+                                        <input
+                                            type="tel"
+                                            value={contactPhone}
+                                            onChange={event => setContactPhone(event.target.value)}
+                                            placeholder="0771234567 or +94771234567"
+                                            autoComplete="tel"
+                                            maxLength={32}
+                                            style={{
+                                                width: "100%",
+                                                padding: "12px",
+                                                borderRadius: "10px",
+                                                border: contactPhone.trim() && !validatePhone(contactPhone).isValid ? "2px solid #ef4444" : "1px solid #cbd5e1",
+                                                backgroundColor: "#ffffff",
+                                                color: "#0f172a",
+                                                fontSize: "14px",
+                                                boxSizing: "border-box"
+                                            }}
+                                        />
+                                        {contactPhone.trim() && !validatePhone(contactPhone).isValid && (
+                                            <span style={{ display: "block", color: "#dc2626", fontSize: "12px", marginTop: "4px", fontWeight: "600" }}>
+                                                ⚠️ {validatePhone(contactPhone).error}
+                                            </span>
+                                        )}
                                         <small style={{ display: "block", color: "#64748b", marginTop: 6 }}>Add an email, mobile number, or both. We will send an acknowledgement when configured; later status updates follow verification and assignment.</small>
                                     </div>
                                     <div>
