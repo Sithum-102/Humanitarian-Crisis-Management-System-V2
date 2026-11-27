@@ -63,48 +63,6 @@ const styles = `
     outline-offset: 3px;
 }
 
-/* Rain layers */
-.portal-page::before,
-.portal-page::after {
-    position: fixed;
-    z-index: 0;
-    inset: -180px 0 0;
-    content: '';
-    pointer-events: none;
-    background-repeat: repeat;
-    transform: translateZ(0);
-}
-.portal-page::before {
-    opacity: .17;
-    background-image: repeating-linear-gradient(
-        103deg,
-        transparent 0 34px,
-        rgba(218, 242, 255, .48) 35px 36px,
-        transparent 37px 96px
-    );
-    background-size: 96px 180px;
-    animation: rain-far .8s linear infinite;
-}
-.portal-page::after {
-    opacity: .22;
-    background-image: repeating-linear-gradient(
-        103deg,
-        transparent 0 53px,
-        rgba(230, 248, 255, .55) 54px 55px,
-        transparent 56px 125px
-    );
-    background-size: 125px 145px;
-    animation: rain-near .48s linear infinite;
-}
-@keyframes rain-far {
-    from { background-position: 0 0; }
-    to { background-position: -18px 180px; }
-}
-@keyframes rain-near {
-    from { background-position: 0 0; }
-    to { background-position: -28px 145px; }
-}
-
 .portal-header {
     display: flex;
     min-height: 96px;

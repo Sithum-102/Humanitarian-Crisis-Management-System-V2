@@ -2,18 +2,22 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import './StormAtmosphere.css';
 
 /**
- * HUMANAID Atmosphere Simulation:
- * - Dimmed, realistic lightning flashes with procedural branching fractal bolts
- * - Soft ambient sky illumination (no harsh blinding flashes)
- * - Synthesized low-frequency thunder rumble via Web Audio API (zero external media files)
- * - Zero rain streaks (clean interface background)
+ * HUMANAID Realistic Storm & Rain Atmosphere Simulation:
+ * - Natural 3D multi-depth particle rain with fluid physics and wind sway
+ * - Soft ground droplet splashes
+ * - Dimmed, realistic lightning flashes with branching fractal bolts
+ * - Soft ambient sky illumination (no harsh blinding glare)
+ * - Rain drops dynamically catch lightning flash illumination
+ * - Synthesized low-frequency thunder rumble & ambient rain wash via Web Audio API
  */
 
-// Web Audio API Synthesizer for Thunder Rumble
+// Web Audio API Synthesizer for Rain and Thunder
 class StormAudioEngine {
   constructor() {
     this.ctx = null;
     this.masterGain = null;
+    this.rainGain = null;
+    this.rainSource = null;
   }
 
   init() {
@@ -33,6 +37,65 @@ class StormAudioEngine {
     }
   }
 
+  async startRain() {
+    await this.resumeContext();
+    if (!this.ctx) return;
+    if (this.rainSource) return;
+
+    // Generate continuous natural pink/brown rain noise buffer
+    const bufferSize = this.ctx.sampleRate * 4;
+    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+
+    let lastOut = 0.0;
+    for (let i = 0; i < bufferSize; i++) {
+      const white = Math.random() * 2 - 1;
+      lastOut = (lastOut + 0.02 * white) / 1.02;
+      data[i] = lastOut * 0.45;
+    }
+
+    this.rainSource = this.ctx.createBufferSource();
+    this.rainSource.buffer = buffer;
+    this.rainSource.loop = true;
+
+    const rainFilter = this.ctx.createBiquadFilter();
+    rainFilter.type = 'lowpass';
+    rainFilter.frequency.setValueAtTime(1200, this.ctx.currentTime);
+
+    const highpass = this.ctx.createBiquadFilter();
+    highpass.type = 'highpass';
+    highpass.frequency.setValueAtTime(180, this.ctx.currentTime);
+
+    this.rainGain = this.ctx.createGain();
+    this.rainGain.gain.setValueAtTime(0.001, this.ctx.currentTime);
+    this.rainGain.gain.exponentialRampToValueAtTime(0.18, this.ctx.currentTime + 1.2);
+
+    this.rainSource.connect(rainFilter);
+    rainFilter.connect(highpass);
+    highpass.connect(this.rainGain);
+    this.rainGain.connect(this.masterGain);
+
+    this.rainSource.start(0);
+  }
+
+  stopRain() {
+    if (!this.ctx || !this.rainGain) return;
+    try {
+      this.rainGain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + 0.5);
+      setTimeout(() => {
+        if (this.rainSource) {
+          try { this.rainSource.stop(); } catch (_) { }
+          this.rainSource.disconnect();
+          this.rainSource = null;
+        }
+      }, 500);
+    } catch (_) { }
+  }
+
+  stopAll() {
+    this.stopRain();
+  }
+
   // Realistic synthesized multi-stage thunder rumble
   playThunder(intensity = 0.5) {
     if (!this.ctx || this.ctx.state === 'suspended') return;
@@ -41,7 +104,6 @@ class StormAudioEngine {
       const now = this.ctx.currentTime;
       const duration = 2.4 + Math.random() * 1.8;
 
-      // 1. Pink noise burst for thunder cracking/rolling
       const bufferSize = this.ctx.sampleRate * duration;
       const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
       const data = buffer.getChannelData(0);
@@ -58,7 +120,6 @@ class StormAudioEngine {
       const noiseSource = this.ctx.createBufferSource();
       noiseSource.buffer = buffer;
 
-      // Resonant lowpass filter to mimic distance roll
       const filter = this.ctx.createBiquadFilter();
       filter.type = 'lowpass';
       filter.frequency.setValueAtTime(140 + intensity * 80, now);
@@ -66,11 +127,9 @@ class StormAudioEngine {
 
       const thunderGain = this.ctx.createGain();
       thunderGain.gain.setValueAtTime(0.001, now);
-      // Soft attack
-      thunderGain.gain.exponentialRampToValueAtTime(0.35 * intensity, now + 0.12);
-      // Secondary rumble rolling swells
-      thunderGain.gain.exponentialRampToValueAtTime(0.24 * intensity, now + 0.55);
-      thunderGain.gain.exponentialRampToValueAtTime(0.18 * intensity, now + 1.1);
+      thunderGain.gain.exponentialRampToValueAtTime(0.32 * intensity, now + 0.12);
+      thunderGain.gain.exponentialRampToValueAtTime(0.22 * intensity, now + 0.55);
+      thunderGain.gain.exponentialRampToValueAtTime(0.16 * intensity, now + 1.1);
       thunderGain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
 
       noiseSource.connect(filter);
@@ -79,15 +138,15 @@ class StormAudioEngine {
 
       noiseSource.start(now);
 
-      // 2. Sub-bass oscillator for physical low-frequency room rumble (30-55 Hz)
+      // Low rumble sub-bass
       const subOsc = this.ctx.createOscillator();
       subOsc.type = 'sine';
-      subOsc.frequency.setValueAtTime(55, now);
-      subOsc.frequency.exponentialRampToValueAtTime(28, now + 1.6);
+      subOsc.frequency.setValueAtTime(52, now);
+      subOsc.frequency.exponentialRampToValueAtTime(26, now + 1.6);
 
       const subGain = this.ctx.createGain();
       subGain.gain.setValueAtTime(0.001, now);
-      subGain.gain.exponentialRampToValueAtTime(0.28 * intensity, now + 0.15);
+      subGain.gain.exponentialRampToValueAtTime(0.25 * intensity, now + 0.15);
       subGain.gain.exponentialRampToValueAtTime(0.0001, now + 1.6);
 
       subOsc.connect(subGain);
@@ -123,11 +182,22 @@ export default function StormAtmosphere({ enabled = true, flashOnMount = false }
     } catch (_) { }
 
     if (nextState) {
-      await audioSingleton.resumeContext();
+      await audioSingleton.startRain();
+    } else {
+      audioSingleton.stopRain();
     }
   }, [audioEnabled]);
 
-  // Main Canvas Animation: Clean lightning atmosphere (zero rain streaks)
+  // Audio lifecycle
+  useEffect(() => {
+    if (!audioEnabled || stormLevel === 'off') {
+      audioSingleton.stopRain();
+    } else if (audioEnabled && stormLevel !== 'off') {
+      audioSingleton.startRain();
+    }
+  }, [audioEnabled, stormLevel]);
+
+  // Main Canvas Animation: Realistic Multi-Depth Rain & Lightning Simulation
   useEffect(() => {
     if (!enabled || stormLevel === 'off') return;
 
@@ -146,6 +216,43 @@ export default function StormAtmosphere({ enabled = true, flashOnMount = false }
     };
     window.addEventListener('resize', handleResize);
 
+    // Realistic Raindrop Generator with 3D Depth Layers (Background, Midground, Foreground)
+    const isMobile = width < 768;
+    const totalDrops = isMobile ? (stormLevel === 'storm' ? 75 : 40) : (stormLevel === 'storm' ? 160 : 80);
+
+    const drops = [];
+    for (let i = 0; i < totalDrops; i++) {
+      // 3 Layers: 0 = Far (tiny, slow), 1 = Mid (steady), 2 = Near (fast, longer)
+      const layer = Math.random() < 0.45 ? 0 : Math.random() < 0.8 ? 1 : 2;
+
+      drops.push({
+        layer,
+        x: Math.random() * (width + 100) - 50,
+        y: Math.random() * height,
+        speed: layer === 0 ? (4.5 + Math.random() * 2.5) : layer === 1 ? (7.5 + Math.random() * 3.5) : (11.5 + Math.random() * 4.5),
+        len: layer === 0 ? (10 + Math.random() * 8) : layer === 1 ? (16 + Math.random() * 10) : (26 + Math.random() * 12),
+        baseOpacity: layer === 0 ? (0.09 + Math.random() * 0.08) : layer === 1 ? (0.16 + Math.random() * 0.12) : (0.24 + Math.random() * 0.12),
+        width: layer === 0 ? 0.85 : layer === 1 ? 1.1 : 1.45,
+      });
+    }
+
+    // Ground splash particles
+    const splashes = [];
+    const addSplash = (x, y, layer) => {
+      if (splashes.length > 45) return;
+      const count = layer === 2 ? 3 : 2;
+      for (let s = 0; s < count; s++) {
+        splashes.push({
+          x,
+          y,
+          vx: (Math.random() - 0.5) * (layer === 2 ? 3.2 : 2.0),
+          vy: -Math.random() * (layer === 2 ? 2.8 : 1.8) - 0.8,
+          radius: layer === 0 ? 0.7 : 1.1,
+          alpha: 0.65,
+        });
+      }
+    };
+
     // Lightning bolt procedural structure
     let activeBolt = null;
 
@@ -160,14 +267,12 @@ export default function StormAtmosphere({ enabled = true, flashOnMount = false }
         const progress = i / steps;
         const targetX = startX + (endX - startX) * progress;
         const targetY = startY + (endY - startY) * progress;
-        // Jagged offset
         const sway = (Math.random() - 0.5) * 45 * (1 - branchLevel * 0.25);
         const nextX = targetX + sway;
         const nextY = targetY;
 
         segments.push({ x1: curX, y1: curY, x2: nextX, y2: nextY });
 
-        // Branching fork
         if (branchLevel < 2 && Math.random() < 0.28 && i > 2 && i < steps - 1) {
           const forkAngle = (Math.random() - 0.5) * 1.2;
           const forkLen = (1 - progress) * distance * 0.5;
@@ -195,7 +300,6 @@ export default function StormAtmosphere({ enabled = true, flashOnMount = false }
       const endX = clickX !== null ? clickX : startX + (Math.random() - 0.5) * width * 0.35;
       const endY = clickY !== null ? Math.max(height * 0.35, clickY) : height * (0.6 + Math.random() * 0.3);
 
-      // Flash execution helper
       const showFlash = (intensity, withBolt, durationMs) => {
         if (withBolt) {
           activeBolt = {
@@ -274,10 +378,69 @@ export default function StormAtmosphere({ enabled = true, flashOnMount = false }
 
     scheduleNextStrike();
 
+    // Natural wind oscillation (~10 to 14 degrees)
+    let time = 0;
+
     const render = () => {
+      time += 0.016;
       ctx.clearRect(0, 0, width, height);
 
-      // Draw Lightning Bolt (soft & dimmed, no rain streaks)
+      const windAngle = 0.22 + Math.sin(time * 0.35) * 0.04;
+      const windX = Math.sin(windAngle);
+      const windY = Math.cos(windAngle);
+
+      // 1. Draw Realistic Falling Raindrops
+      ctx.strokeStyle = '#cbe4ff';
+      ctx.lineCap = 'round';
+
+      for (let i = 0; i < drops.length; i++) {
+        const d = drops[i];
+        ctx.lineWidth = d.width;
+        // Drops slightly illuminate when lightning flashes
+        const dynamicAlpha = Math.min(0.7, d.baseOpacity + lightningFlash * 0.35);
+        ctx.globalAlpha = dynamicAlpha;
+
+        ctx.beginPath();
+        ctx.moveTo(d.x, d.y);
+        ctx.lineTo(d.x + windX * d.len, d.y + windY * d.len);
+        ctx.stroke();
+
+        d.x += windX * d.speed;
+        d.y += windY * d.speed;
+
+        // Reset if reached bottom
+        if (d.y > height) {
+          if (Math.random() < 0.22) {
+            addSplash(d.x, height - 2, d.layer);
+          }
+          d.y = -d.len - Math.random() * 25;
+          d.x = Math.random() * (width + 100) - 50;
+        }
+        if (d.x > width + 60) {
+          d.x = -60;
+        }
+      }
+
+      // 2. Draw Ground Splashes
+      for (let i = splashes.length - 1; i >= 0; i--) {
+        const s = splashes[i];
+        ctx.globalAlpha = s.alpha * 0.55;
+        ctx.fillStyle = '#d8ecff';
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2);
+        ctx.fill();
+
+        s.x += s.vx;
+        s.y += s.vy;
+        s.vy += 0.16; // gravity
+        s.alpha -= 0.055;
+
+        if (s.alpha <= 0 || s.y > height) {
+          splashes.splice(i, 1);
+        }
+      }
+
+      // 3. Draw Lightning Bolt (soft & dimmed)
       if (activeBolt && activeBolt.segments) {
         ctx.save();
         ctx.shadowColor = '#90e0ef';
@@ -293,7 +456,6 @@ export default function StormAtmosphere({ enabled = true, flashOnMount = false }
         }
         ctx.stroke();
 
-        // Inner glowing core
         ctx.strokeStyle = '#cbf4ff';
         ctx.lineWidth = 0.9;
         ctx.stroke();
@@ -313,13 +475,13 @@ export default function StormAtmosphere({ enabled = true, flashOnMount = false }
       window.removeEventListener('touchend', handleDocumentInteraction);
       if (lightningTimer) clearTimeout(lightningTimer);
     };
-  }, [enabled, stormLevel, audioEnabled, flashOnMount]);
+  }, [enabled, stormLevel, audioEnabled, flashOnMount, lightningFlash]);
 
   if (!enabled) return null;
 
   return (
     <>
-      {/* Visual Canvas for Lightning Bolt */}
+      {/* Visual Canvas for Realistic Rain & Lightning Bolt */}
       <canvas ref={canvasRef} className="storm-canvas" aria-hidden="true" />
 
       {/* Screen flash layer with soft, dimmed opacity */}
@@ -338,19 +500,19 @@ export default function StormAtmosphere({ enabled = true, flashOnMount = false }
             type="button"
             className="storm-pill-btn"
             onClick={() => setMinimized(false)}
-            aria-label="Toggle Lightning Atmosphere controls"
-            title="Lightning Atmosphere Settings"
+            aria-label="Toggle Storm Atmosphere controls"
+            title="Storm Atmosphere Settings (Rain & Lightning)"
           >
-            <span className="storm-icon">⚡</span>
-            <span className="storm-label">Atmosphere</span>
-            {audioEnabled && <span className="storm-sound-dot" title="Thunder audio active" />}
+            <span className="storm-icon">⛈️</span>
+            <span className="storm-label">Storm FX</span>
+            {audioEnabled && <span className="storm-sound-dot" title="Rain & Thunder audio active" />}
           </button>
         ) : (
           <div className="storm-panel">
             <div className="storm-panel-header">
               <div className="storm-panel-title">
-                <span>⚡</span>
-                <strong>Lightning Atmosphere</strong>
+                <span>⛈️</span>
+                <strong>Storm Atmosphere</strong>
               </div>
               <button
                 type="button"
@@ -363,7 +525,7 @@ export default function StormAtmosphere({ enabled = true, flashOnMount = false }
             </div>
 
             <p className="storm-panel-desc">
-              Realistic atmospheric lightning flashes on click/tap and occasional random strikes with thunder audio.
+              Realistic multi-depth rain shower with dimmed lightning flashes and synthesized audio.
             </p>
 
             <div className="storm-actions">
@@ -374,25 +536,25 @@ export default function StormAtmosphere({ enabled = true, flashOnMount = false }
                 aria-pressed={audioEnabled}
               >
                 <span>{audioEnabled ? '🔊' : '🔇'}</span>
-                <span>{audioEnabled ? 'Thunder Audio: ON' : 'Audio Muted (Tap to enable)'}</span>
+                <span>{audioEnabled ? 'Rain & Thunder Audio: ON' : 'Audio Muted (Tap to enable)'}</span>
               </button>
 
               <div className="storm-intensity-group">
-                <span className="storm-intensity-label">Lightning Frequency:</span>
+                <span className="storm-intensity-label">Atmosphere:</span>
                 <div className="storm-intensity-buttons">
                   <button
                     type="button"
                     className={stormLevel === 'storm' ? 'is-selected' : ''}
                     onClick={() => setStormLevel('storm')}
                   >
-                    ⚡ Active
+                    ⛈️ Heavy Storm
                   </button>
                   <button
                     type="button"
                     className={stormLevel === 'calm' ? 'is-selected' : ''}
                     onClick={() => setStormLevel('calm')}
                   >
-                    🌤️ Calm
+                    🌧️ Steady Rain
                   </button>
                   <button
                     type="button"

@@ -1720,44 +1720,6 @@ body {
     border: 0;
 }
 
-/* Rain layers behind all pages */
-body::before,
-body::after {
-    position: fixed;
-    z-index: 0;
-    inset: -180px 0 0;
-    content: '';
-    pointer-events: none;
-    background-repeat: repeat;
-    transform: translateZ(0);
-}
-
-body::before {
-    opacity: .14;
-    background-image: repeating-linear-gradient( 103deg, transparent 0 38px, rgba(218, 242, 255, .44) 39px 40px, transparent 41px 104px );
-    background-size: 104px 180px;
-    animation: site-rain-far .8s linear infinite;
-}
-
-body::after {
-    opacity: .18;
-    background-image: repeating-linear-gradient( 103deg, transparent 0 55px, rgba(230, 248, 255, .5) 56px 57px, transparent 58px 132px );
-    background-size: 132px 145px;
-    animation: site-rain-near .48s linear infinite;
-}
-
-@keyframes site-rain-far {
-    to {
-        background-position: -18px 180px;
-    }
-}
-
-@keyframes site-rain-near {
-    to {
-        background-position: -28px 145px;
-    }
-}
-
 /* Reveal background through the login and app layouts */
 .auth-page,
 .app-shell,
