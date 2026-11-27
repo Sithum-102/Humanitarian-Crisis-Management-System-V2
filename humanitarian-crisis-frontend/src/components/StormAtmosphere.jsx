@@ -285,7 +285,7 @@ export default function StormAtmosphere({ enabled = true, flashOnMount = false }
     const triggerLightning = (clickX = null, clickY = null) => {
       if (stormLevel === 'off') return;
 
-      const strikeIntensity = 0.7 + Math.random() * 0.3;
+      const strikeIntensity = 0.45 + Math.random() * 0.25;
       const startX = clickX !== null
         ? Math.max(40, Math.min(width - 40, clickX + (Math.random() - 0.5) * 60))
         : width * (0.2 + Math.random() * 0.6);
@@ -297,7 +297,7 @@ export default function StormAtmosphere({ enabled = true, flashOnMount = false }
         if (withBolt) {
           activeBolt = {
             segments: createLightningBolt(startX, 0, endX, endY),
-            alpha: 0.95,
+            alpha: 0.65,
           };
         }
         setLightningFlash(intensity);
@@ -307,23 +307,23 @@ export default function StormAtmosphere({ enabled = true, flashOnMount = false }
         }, durationMs);
       };
 
-      // 1. Initial preliminary flash (150ms)
-      showFlash(0.45 * strikeIntensity, false, 150);
+      // 1. Initial preliminary soft sheet flash (140ms)
+      showFlash(0.25 * strikeIntensity, false, 140);
 
       // PAUSE (380ms of darkness)
 
-      // 2. Main powerful lightning strike with visible fractal bolt (250ms)
+      // 2. Main lightning strike with visible fractal bolt (240ms) - dimmed
       setTimeout(() => {
-        showFlash(0.9 * strikeIntensity, true, 250);
-      }, 530);
+        showFlash(0.55 * strikeIntensity, true, 240);
+      }, 520);
 
       // PAUSE (420ms of darkness)
 
-      // 3. Occasional secondary ambient after-flash (180ms)
-      if (Math.random() < 0.7) {
+      // 3. Occasional secondary ambient after-flash (gentle, 180ms)
+      if (Math.random() < 0.65) {
         setTimeout(() => {
-          showFlash(0.38 * strikeIntensity, false, 180);
-        }, 1180);
+          showFlash(0.20 * strikeIntensity, false, 180);
+        }, 1160);
       }
 
       // Thunder rumble following the main strike with realistic physical delay
@@ -427,14 +427,14 @@ export default function StormAtmosphere({ enabled = true, flashOnMount = false }
         }
       }
 
-      // 3. Draw Lightning Bolt
+      // 3. Draw Lightning Bolt (soft & dimmed)
       if (activeBolt && activeBolt.segments) {
         ctx.save();
         ctx.shadowColor = '#90e0ef';
-        ctx.shadowBlur = 18;
+        ctx.shadowBlur = 10;
         ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 2.4;
-        ctx.globalAlpha = 0.95;
+        ctx.lineWidth = 1.6;
+        ctx.globalAlpha = activeBolt.alpha || 0.6;
 
         ctx.beginPath();
         for (const seg of activeBolt.segments) {
@@ -445,7 +445,7 @@ export default function StormAtmosphere({ enabled = true, flashOnMount = false }
 
         // Inner glowing core
         ctx.strokeStyle = '#cbf4ff';
-        ctx.lineWidth = 1.2;
+        ctx.lineWidth = 0.9;
         ctx.stroke();
         ctx.restore();
       }
